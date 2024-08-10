@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+
+	<parent>
+		<groupId>com.kseth</groupId>
+		<artifactId>development-starter-parent</artifactId>
+		<version>2.3.0</version>
+	</parent>
+
+	<groupId>com.th3hero</groupId>
+	<artifactId>clan-tracker</artifactId>
+	<version>0.0.1</version>
+	<name>clan-tracker</name>
+	<description>WOT clan tracker tool</description>
+	<packaging>pom</packaging>
+
+	<properties>
+		<java.version>21</java.version>
+	</properties>
+
+	<modules>
+		<module>clan-tracker-api</module>
+		<module>clan-tracker-app</module>
+		<module>clan-tracker-jpa</module>
+		<module>clan-tracker-lib</module>
+		<module>clan-tracker-api</module>
+	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.th3hero</groupId>
+				<artifactId>clan-tracker-lib</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.th3hero</groupId>
+				<artifactId>clan-tracker-jpa</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.th3hero</groupId>
+				<artifactId>clan-tracker-app</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.th3hero</groupId>
+				<artifactId>clan-tracker-api</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+
+</project>
