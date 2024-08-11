@@ -15,13 +15,25 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.th3hero</groupId>
+			<artifactId>clan-tracker-lib</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.th3hero</groupId>
+			<artifactId>clan-tracker-jpa</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>com.kseth</groupId>
-			<artifactId>development-starter-jpa</artifactId>
+			<artifactId>development-starter-monitoring</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.kseth</groupId>
-			<artifactId>development-starter-postgres</artifactId>
-			<scope>runtime</scope>
+			<artifactId>development-starter-rest-webmvc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-quartz</artifactId>
 		</dependency>
 
 	</dependencies>

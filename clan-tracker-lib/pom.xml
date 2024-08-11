@@ -16,12 +16,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.kseth</groupId>
-			<artifactId>development-starter-jpa</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.kseth</groupId>
-			<artifactId>development-starter-postgres</artifactId>
-			<scope>runtime</scope>
+			<artifactId>development-util</artifactId>
 		</dependency>
 
 	</dependencies>
