@@ -16,3 +16,22 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  quartz:
+    job-store-type: jdbc
+    properties:
+      org:
+        quartz:
+          scheduler:
+            idleWaitTime: 7500
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+  servlet:
+    multipart:
+      max-file-size: 64MB
+springdoc:
+  swagger-ui:
+    use-root-path: true
+wargaming:
+  api-token:
+server:
+  port: 5002

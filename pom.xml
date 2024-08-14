@@ -22,11 +22,9 @@
 	</properties>
 
 	<modules>
-		<module>clan-tracker-api</module>
 		<module>clan-tracker-app</module>
 		<module>clan-tracker-jpa</module>
 		<module>clan-tracker-lib</module>
-		<module>clan-tracker-api</module>
 	</modules>
 
 	<dependencyManagement>
