@@ -52,7 +52,8 @@ public class ConfigService {
             .defaultActivitySummaryDateRange(configUpload.defaultActivitySummaryDateRange())
             .performanceThresholdBad(configUpload.performanceThresholdBad())
             .performanceThresholdPoor(configUpload.performanceThresholdPoor())
-            .performanceThresholdGood(configUpload.performanceThresholdGood()).build();
+            .performanceThresholdGood(configUpload.performanceThresholdGood())
+            .build();
 
         log.debug("Creating new config: {}", configJpa);
         return Config.fromJpa(configRepository.save(configJpa));

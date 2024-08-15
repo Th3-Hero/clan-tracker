@@ -1,5 +1,6 @@
 package com.th3hero.clantracker.app;
 
+import com.th3hero.clantracker.app.dto.ConfigUpload;
 import com.th3hero.clantracker.jpa.entities.ClanJpa;
 import com.th3hero.clantracker.jpa.entities.ConfigJpa;
 import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
@@ -54,5 +55,9 @@ public class TestEntities {
             .totalRandomBattles(100L)
             .totalSkirmishBattles(100L)
             .build();
+    }
+
+    public static ConfigUpload configUpload() {
+        return new ConfigUpload(28, 28, 20, 30, 40);
     }
 }
