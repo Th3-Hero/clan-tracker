@@ -56,7 +56,7 @@ public class SchedulingService {
                 .withIdentity(olderTrigger.getKey())
                 .forJob(MemberActivityFetchJob.JOB_KEY)
                 .usingJobData(MemberActivityFetchJob.CLAN_ID, clanId)
-                .startAt(olderTrigger.getStartTime())
+                .startAt(DateUtils.toDate(nextExecutionTime(interval)))
                 .withSchedule(SimpleScheduleBuilder.simpleSchedule()
                     .withIntervalInHours(interval)
                     .withMisfireHandlingInstructionIgnoreMisfires()
