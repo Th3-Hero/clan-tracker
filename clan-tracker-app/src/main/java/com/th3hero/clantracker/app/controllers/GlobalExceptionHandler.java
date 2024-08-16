@@ -14,4 +14,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail clanNotFoundException(ClanNotFoundException e) {
         return ProblemDetailFactory.createProblemDetail(HttpStatus.NOT_FOUND, e);
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail illegalArgumentException(IllegalArgumentException e) {
+        return ProblemDetailFactory.createProblemDetail(HttpStatus.BAD_REQUEST, e);
+    }
 }

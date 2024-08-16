@@ -1,7 +1,7 @@
 package com.th3hero.clantracker.app.controllers;
 
-import com.th3hero.clantracker.app.dto.Config;
-import com.th3hero.clantracker.app.dto.ConfigUpload;
+import com.th3hero.clantracker.app.dto.config.Config;
+import com.th3hero.clantracker.app.dto.config.ConfigUpload;
 import com.th3hero.clantracker.app.services.ConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

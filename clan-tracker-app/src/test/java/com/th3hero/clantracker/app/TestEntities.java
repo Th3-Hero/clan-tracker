@@ -1,6 +1,6 @@
 package com.th3hero.clantracker.app;
 
-import com.th3hero.clantracker.app.dto.ConfigUpload;
+import com.th3hero.clantracker.app.dto.config.ConfigUpload;
 import com.th3hero.clantracker.jpa.entities.ClanJpa;
 import com.th3hero.clantracker.jpa.entities.ConfigJpa;
 import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;

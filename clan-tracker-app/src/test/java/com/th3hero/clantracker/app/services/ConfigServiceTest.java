@@ -1,8 +1,8 @@
 package com.th3hero.clantracker.app.services;
 
 import com.th3hero.clantracker.app.TestEntities;
-import com.th3hero.clantracker.app.dto.Config;
-import com.th3hero.clantracker.app.dto.ConfigUpload;
+import com.th3hero.clantracker.app.dto.config.Config;
+import com.th3hero.clantracker.app.dto.config.ConfigUpload;
 import com.th3hero.clantracker.jpa.repositories.ConfigRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;

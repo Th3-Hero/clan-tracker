@@ -1,4 +1,4 @@
-package com.th3hero.clantracker.app.dto;
+package com.th3hero.clantracker.app.dto.config;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
