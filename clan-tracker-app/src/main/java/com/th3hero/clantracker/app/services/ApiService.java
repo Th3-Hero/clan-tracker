@@ -77,7 +77,9 @@ public class ApiService {
         if (!"ok".equals(response.status())) {
             throw new InvalidWargamingResponseException("%s".formatted(response.error()));
         }
-        return response.data().values().stream().findFirst();
+        return response.data().values().stream()
+            .filter(clan -> clan.clanId().equals(clanId))
+            .findFirst();
     }
 
     public List<EnrichedPlayer> memberDetails(List<Long> memberIds) {

@@ -10,5 +10,5 @@ public record ClanSearch(
     WargamingError error,
     List<BasicClan> data
 ) {
-    public record BasicClan(@JsonAlias("clan_id") Long id, String tag) { }
+    public record BasicClan(@JsonAlias("clan_id") @NonNull Long id, @NonNull String tag) { }
 }

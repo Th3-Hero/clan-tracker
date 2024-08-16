@@ -26,7 +26,7 @@ public class SchedulingService {
 
             int interval = configService.getConfigJpa().getMemberActivityUpdateInterval();
 
-            TriggerKey key = TriggerKey.triggerKey(clanId.toString());
+            TriggerKey key = TriggerKey.triggerKey(clanId.toString(), MEMBER_ACTIVITY_FETCH_GROUP);
             Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(key)
                 .forJob(MemberActivityFetchJob.JOB_KEY)
@@ -39,7 +39,7 @@ public class SchedulingService {
                 .build();
 
             scheduler.scheduleJob(trigger);
-            log.debug("Scheduled new job/trigger for member activity fetch job");
+            log.info("Scheduled new trigger for member activity fetch of clan: {}", clanId);
         } catch (SchedulerException e) {
             log.error("Failed to schedule new job/trigger for member activity fetch job", e);
             throw new SchedulingException("Failed to schedule new job/trigger for member activity fetch job", e);
@@ -64,7 +64,7 @@ public class SchedulingService {
                 .build();
 
             scheduler.rescheduleJob(olderTrigger.getKey(), newTrigger);
-            log.debug("Changed interval for member activity fetch job");
+            log.info("Changed interval for member activity fetch of clan: {}", clanId);
         } catch (SchedulerException e) {
             log.error("Failed to change interval for member activity fetch job", e);
             throw new SchedulingException("Failed to change interval for member activity fetch job", e);
@@ -74,7 +74,7 @@ public class SchedulingService {
     public void removeMemberActivityFetchJob(Long clanId) {
         try {
             scheduler.unscheduleJob(TriggerKey.triggerKey(clanId.toString(), MEMBER_ACTIVITY_FETCH_GROUP));
-            log.debug("Removed job/trigger for member activity fetch job");
+            log.info("Removed trigger for member activity fetch of clan: {}", clanId);
         } catch (SchedulerException e) {
             log.error("Failed to remove job/trigger for member activity fetch job", e);
             throw new SchedulingException("Failed to remove job/trigger for member activity fetch job", e);

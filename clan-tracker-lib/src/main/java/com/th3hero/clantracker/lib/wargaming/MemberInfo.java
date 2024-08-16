@@ -11,13 +11,13 @@ public record MemberInfo(
     Map<String, EnrichedPlayer> data
 ) {
     public record EnrichedPlayer(
-        @JsonAlias("account_id") Long accountId,
-        @JsonAlias("clan_id") Long clanId,
-        @JsonAlias("updated_at") Long updatedAt,
-        @JsonAlias("last_battle_time") Long lastBattleTime,
-        String nickname,
-        Map<String, Battle> statistics
+        @JsonAlias("account_id") @NonNull Long accountId,
+        @JsonAlias("clan_id") @NonNull Long clanId,
+        @JsonAlias("updated_at") @NonNull Long updatedAt,
+        @JsonAlias("last_battle_time") @NonNull Long lastBattleTime,
+        @NonNull String nickname,
+        @NonNull Map<String, Battle> statistics
     ) {
-        public record Battle(Long battles) { }
+        public record Battle(@NonNull Long battles) { }
     }
 }

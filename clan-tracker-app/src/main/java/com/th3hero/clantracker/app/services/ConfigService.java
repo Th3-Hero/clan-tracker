@@ -55,7 +55,7 @@ public class ConfigService {
             .performanceThresholdGood(configUpload.performanceThresholdGood())
             .build();
 
-        log.debug("Creating new config: {}", configJpa);
+        log.info("Creating new config");
         return Config.fromJpa(configRepository.save(configJpa));
     }
 
@@ -79,7 +79,7 @@ public class ConfigService {
             configJpa.setPerformanceThresholdGood(configUpload.performanceThresholdGood());
         }
 
-        log.debug("Updating config: {}", configJpa);
+        log.info("Updating config");
         return Config.fromJpa(configRepository.save(configJpa));
     }
 

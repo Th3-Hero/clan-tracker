@@ -13,14 +13,14 @@ public record ClanInfo(
 ) {
 
     public record EnrichedClan(
-        @JsonAlias("clan_id") Long clanId,
-        String tag,
-        List<BasicPlayer> members
+        @JsonAlias("clan_id") @NonNull Long clanId,
+        @NonNull String tag,
+        @NonNull List<BasicPlayer> members
     ) {
         public record BasicPlayer(
-            @JsonAlias("account_id") Long id,
-            @JsonAlias("joined_at") Long joinedAt,
-            String role
+            @JsonAlias("account_id") @NonNull Long id,
+            @JsonAlias("joined_at") @NonNull Long joinedAt,
+            @NonNull String role
         ) { }
     }
 }
