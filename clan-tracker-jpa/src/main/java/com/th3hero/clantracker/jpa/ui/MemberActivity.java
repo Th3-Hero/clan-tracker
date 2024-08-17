@@ -1,4 +1,4 @@
-package com.th3hero.clantracker.app.dto.ui;
+package com.th3hero.clantracker.jpa.ui;
 
 import com.th3hero.clantracker.jpa.entities.MemberJpa.Rank;
 import lombok.NonNull;

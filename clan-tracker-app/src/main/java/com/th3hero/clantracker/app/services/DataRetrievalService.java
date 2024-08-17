@@ -1,8 +1,8 @@
 package com.th3hero.clantracker.app.services;
 
-import com.th3hero.clantracker.app.dto.ui.ActivityInfo;
-import com.th3hero.clantracker.app.dto.ui.Clan;
-import com.th3hero.clantracker.app.dto.ui.MemberActivity;
+import com.th3hero.clantracker.jpa.ui.ActivityInfo;
+import com.th3hero.clantracker.jpa.ui.Clan;
+import com.th3hero.clantracker.jpa.ui.MemberActivity;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.jpa.entities.ClanJpa;
 import com.th3hero.clantracker.jpa.entities.ConfigJpa;
@@ -10,7 +10,6 @@ import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
 import com.th3hero.clantracker.jpa.entities.MemberJpa;
 import com.th3hero.clantracker.jpa.repositories.ClanRepository;
 import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
-import com.th3hero.clantracker.jpa.repositories.MemberRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,7 +29,6 @@ import java.util.function.Function;
 public class DataRetrievalService {
     private final ConfigService configService;
     private final ClanRepository clanRepository;
-    private final MemberRepository memberRepository;
     private final MemberActivityRepository memberActivityRepository;
 
     public Integer getDefaultActivitySummaryDateRange() {
@@ -55,6 +53,21 @@ public class DataRetrievalService {
             throw new IllegalArgumentException("Start date must be before end date");
         }
 
+        List<MemberActivity> memberActivity = createMemberActivityList(startDate, endDate, clanJpa);
+
+        return new ActivityInfo(
+            new Clan(clanJpa.getId(), clanJpa.getTag()),
+            startDate,
+            endDate,
+            configJpa.getPerformanceThresholdBad(),
+            configJpa.getPerformanceThresholdPoor(),
+            configJpa.getPerformanceThresholdGood(),
+            memberActivity
+        );
+
+    }
+
+    private List<MemberActivity> createMemberActivityList(LocalDateTime startDate, LocalDateTime endDate, ClanJpa clanJpa) {
         List<MemberActivity> memberActivity = new ArrayList<>();
         for (MemberJpa member : clanJpa.getMembers()) {
             Specification<MemberActivityJpa> spec = memberActivitySpec(member.getId(), startDate, endDate);
@@ -67,6 +80,7 @@ public class DataRetrievalService {
             Long skirmishDiff = getDiff(memberActivityJpas, MemberActivityJpa::getTotalSkirmishBattles);
             Long advancesDiff = getDiff(memberActivityJpas, MemberActivityJpa::getTotalAdvancesBattles);
             Long clanWarDiff = getDiff(memberActivityJpas, MemberActivityJpa::getTotalClanWarBattles);
+
             MemberActivity activity = new MemberActivity(
                 member.getId(),
                 member.getName(),
@@ -82,17 +96,7 @@ public class DataRetrievalService {
             );
             memberActivity.add(activity);
         }
-
-        return new ActivityInfo(
-            new Clan(clanJpa.getId(), clanJpa.getTag()),
-            startDate,
-            endDate,
-            configJpa.getPerformanceThresholdBad(),
-            configJpa.getPerformanceThresholdPoor(),
-            configJpa.getPerformanceThresholdGood(),
-            memberActivity
-        );
-
+        return memberActivity;
     }
 
     private LocalDateTime getLastBattle(List<MemberActivityJpa> memberActivityJpas) {
