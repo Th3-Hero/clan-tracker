@@ -1,5 +1,6 @@
 package com.th3hero.clantracker.app.services;
 
+import com.th3hero.clantracker.api.ui.Config;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.jpa.entities.ClanJpa;
 import com.th3hero.clantracker.jpa.entities.ConfigJpa;
@@ -32,21 +33,45 @@ public class DataRetrievalService {
     private final ClanRepository clanRepository;
     private final MemberActivityRepository memberActivityRepository;
 
-    public Integer getDefaultActivitySummaryDateRange() {
-        return configService.getConfigJpa().getDefaultActivitySummaryDateRange();
+    /**
+     * Get the default config values for the app. Configurations are dynamic and thus need to be retrieved.
+     * @return the default config values.
+     */
+    public Config getDefaultConfig() {
+        final var configJpa = configService.getConfigJpa();
+        return new Config(
+            configJpa.getDefaultActivitySummaryDateRange(),
+            configJpa.getPerformanceThresholdBad(),
+            configJpa.getPerformanceThresholdPoor(),
+            configJpa.getPerformanceThresholdGood()
+        );
     }
 
+    /**
+     * Get a list of all tracked clans.
+     * @return a list of tracked clans.
+     */
     public List<Clan> getClanList() {
         return clanRepository.findAll().stream()
             .map(clanJpa -> new Clan(clanJpa.getId(), clanJpa.getTag()))
             .toList();
     }
 
+    /**
+     * Get activity data for a specific clan within a time period. If start date and/or end date period is not specified, activity info for the last x days is returned(x days being specified by config).
+     * @param clanId the id of the clan to get activity data for.
+     * @param startDate the start date of the activity data.
+     * @param endDate the end date of the activity data.
+     * @return the activity data for the clan.
+     * @Throws ClanNotFoundException if the clan with the specified id is not found.
+     * @Throws IllegalArgumentException if the start date is after the end date.
+     */
     public ActivityInfo getClanActivityData(@NonNull Long clanId, LocalDateTime startDate, LocalDateTime endDate) {
         ConfigJpa configJpa = configService.getConfigJpa();
         ClanJpa clanJpa = clanRepository.findById(clanId)
             .orElseThrow(() -> new ClanNotFoundException("Failed to find clan with id: %s".formatted(clanId)));
 
+        // if either or both dates are null, use the default range
         if (startDate == null || endDate == null) {
             endDate = LocalDate.now().atStartOfDay();
             startDate = endDate.minusDays(configJpa.getDefaultActivitySummaryDateRange());
@@ -60,9 +85,6 @@ public class DataRetrievalService {
             new Clan(clanJpa.getId(), clanJpa.getTag()),
             startDate,
             endDate,
-            configJpa.getPerformanceThresholdBad(),
-            configJpa.getPerformanceThresholdPoor(),
-            configJpa.getPerformanceThresholdGood(),
             memberActivity
         );
 
@@ -71,6 +93,7 @@ public class DataRetrievalService {
     private List<MemberActivity> createMemberActivityList(LocalDateTime startDate, LocalDateTime endDate, ClanJpa clanJpa) {
         List<MemberActivity> memberActivity = new ArrayList<>();
         for (MemberJpa member : clanJpa.getMembers()) {
+            // get all the member activity data for the player within the specified time period
             Specification<MemberActivityJpa> spec = memberActivitySpec(member.getId(), startDate, endDate);
             List<MemberActivityJpa> memberActivityJpas = memberActivityRepository.findBy(
                 spec,

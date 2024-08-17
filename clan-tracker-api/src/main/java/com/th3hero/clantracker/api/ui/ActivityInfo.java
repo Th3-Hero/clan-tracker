@@ -1,16 +1,18 @@
 package com.th3hero.clantracker.api.ui;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.NonNull;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Schema(
+    name = "ActivityInfo",
+    description = "Information about the activity of a clan."
+)
 public record ActivityInfo(
-    @NonNull Clan clan,
-    @NonNull LocalDateTime startDate,
-    @NonNull LocalDateTime endDate,
-    @NonNull Integer performanceThresholdBad,
-    @NonNull Integer performanceThresholdPoor,
-    @NonNull Integer performanceThresholdGood,
-    @NonNull List<MemberActivity> memberActivity
+    @Schema(description = "The clan the activity data is for.") @NonNull Clan clan,
+    @Schema(description = "Starting date of the activity period.") @NonNull LocalDateTime startDate,
+    @Schema(description = "Ending date of the activity period.") @NonNull LocalDateTime endDate,
+    @Schema(description = "Activity for clan members within the specified time period.") @NonNull List<MemberActivity> memberActivity
 ) { }

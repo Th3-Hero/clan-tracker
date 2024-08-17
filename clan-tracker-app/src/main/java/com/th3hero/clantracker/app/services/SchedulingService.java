@@ -20,6 +20,10 @@ public class SchedulingService {
 
     private static final String MEMBER_ACTIVITY_FETCH_GROUP = "member_activity_fetch_group";
 
+    /**
+     * Schedules a job to fetch member activity for a clan.
+     * @param clanId The id of the clan to schedule the job for
+     */
     public void scheduleMemberActivityFetchJob(Long clanId) {
         try {
             createJobIfNone(MemberActivityFetchJob.JOB_KEY, MemberActivityFetchJob.class, "Fetches member activity for a clan");
@@ -46,7 +50,11 @@ public class SchedulingService {
         }
     }
 
-    public void changeMemberActivityFetchJobInterval(Long clanId) {
+    /**
+     * Updates the interval of the job that fetches member activity for a clan based on the config. This is used when the interval is changed in the config.
+     * @param clanId The id of the clan to update the job for.
+     */
+    public void updateMemberActivityFetchJobInterval(Long clanId) {
         try {
             Trigger olderTrigger = scheduler.getTrigger(TriggerKey.triggerKey(clanId.toString(), MEMBER_ACTIVITY_FETCH_GROUP));
 
@@ -71,6 +79,10 @@ public class SchedulingService {
         }
     }
 
+    /**
+     * Removes the job that fetches member activity for a clan. The clan will no longer be tracked.
+     * @param clanId The id of the clan to remove the job for.
+     */
     public void removeMemberActivityFetchJob(Long clanId) {
         try {
             scheduler.unscheduleJob(TriggerKey.triggerKey(clanId.toString(), MEMBER_ACTIVITY_FETCH_GROUP));

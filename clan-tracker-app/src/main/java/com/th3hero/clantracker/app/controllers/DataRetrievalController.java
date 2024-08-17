@@ -1,5 +1,6 @@
 package com.th3hero.clantracker.app.controllers;
 
+import com.th3hero.clantracker.api.ui.Config;
 import com.th3hero.clantracker.app.services.DataRetrievalService;
 import com.th3hero.clantracker.api.ui.ActivityInfo;
 import com.th3hero.clantracker.api.ui.Clan;
@@ -23,10 +24,10 @@ import java.util.List;
 public class DataRetrievalController {
     private final DataRetrievalService dataRetrievalService;
 
-    @GetMapping("/defaults")
+    @GetMapping("/config")
     @Operation(summary = "Get the default date range for activity summary data")
-    public Integer getDefaultActivitySummaryDateRange() {
-        return dataRetrievalService.getDefaultActivitySummaryDateRange();
+    public Config getDefaultActivitySummaryDateRange() {
+        return dataRetrievalService.getDefaultConfig();
     }
 
     @GetMapping("/clan-list")
@@ -38,7 +39,7 @@ public class DataRetrievalController {
     @GetMapping("/clan-activity/{clanId}")
     @Operation(summary = "Get activity data for a specific clan. If no date range is provided, the default range will be used.")
     public ActivityInfo getClanActivityInfo(
-        @PathVariable @NotNull Long clanId,
+        @PathVariable @NotNull(message = "Clan id must be provided.") Long clanId,
         @RequestParam(required = false) LocalDateTime startDate,
         @RequestParam(required = false) LocalDateTime endDate
     ) {

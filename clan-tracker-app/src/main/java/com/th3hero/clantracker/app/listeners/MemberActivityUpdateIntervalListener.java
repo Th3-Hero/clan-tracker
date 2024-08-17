@@ -21,7 +21,7 @@ public class MemberActivityUpdateIntervalListener {
     public void updateMemberActivityIntervalListener(MemberActivityUpdateIntervalChangedEvent event) {
         List<ClanJpa> clans = clanRepository.findAll();
         for (ClanJpa clan : clans) {
-            schedulingService.changeMemberActivityFetchJobInterval(clan.getId());
+            schedulingService.updateMemberActivityFetchJobInterval(clan.getId());
         }
     }
 }

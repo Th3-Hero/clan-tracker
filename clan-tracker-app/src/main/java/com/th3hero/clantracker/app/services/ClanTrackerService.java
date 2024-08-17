@@ -46,6 +46,10 @@ public class ClanTrackerService {
     private final MemberRepository memberRepository;
     private final MemberActivityRepository memberActivityRepository;
 
+    /**
+     * Add a clan for tracking.
+     * @param clanTag the clan tag to add for tracking.
+     */
     public void addClanForTracking(String clanTag) {
         Optional<ClanSearch.BasicClan> clan = apiService.clanSearch(clanTag);
         if (clan.isEmpty()) {
@@ -56,6 +60,10 @@ public class ClanTrackerService {
         schedulingService.scheduleMemberActivityFetchJob(clan.get().id());
     }
 
+    /**
+     * Remove a clan from tracking.
+     * @param clanTag the clan tag to remove from tracking.
+     */
     public void removeClanFromTracking(String clanTag) {
         Optional<ClanJpa> clan = clanRepository.findByTag(clanTag);
         if (clan.isEmpty()) {
@@ -67,7 +75,12 @@ public class ClanTrackerService {
         clanRepository.delete(clan.get());
     }
 
+    /**
+     * Fetch clan members data for a specific clan.
+     * @param clanId the id of the clan to fetch members for.
+     */
     public void fetchClanMembers(Long clanId) {
+        // get clan info and basic member info
         Optional<EnrichedClan> clanDetails = apiService.clanDetails(clanId);
         if (clanDetails.isEmpty()) {
             log.info("Clan with id {} not found", clanId);
@@ -76,6 +89,7 @@ public class ClanTrackerService {
         List<Long> memberIds = clanDetails.get().members().stream()
             .map(BasicPlayer::id)
             .toList();
+        // get detailed member info for the members in the clan
         List<EnrichedPlayer> members = apiService.memberDetails(memberIds);
         if (members.size() != memberIds.size()) {
             log.error("Failed to fetch all members for clan {}", clanId);
@@ -102,57 +116,6 @@ public class ClanTrackerService {
 
         clan.getMembers().addAll(memberJpas);
         clanRepository.save(clan);
-    }
-
-    private static List<MemberActivityJpa> createMemberActivityJpas(Optional<EnrichedClan> clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
-        if (clanDetails.isEmpty()) {
-            throw new ClanNotFoundException("Clan not found");
-        }
-        return clanDetails.get().members().stream()
-            .map(basicPlayer -> {
-                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
-                Long clanWarAbsoluteBattles = enrichedPlayer.statistics().get("globalmap_absolute").battles();
-                Long clanWarMiddleBattles = enrichedPlayer.statistics().get("globalmap_middle").battles();
-                Long clanWarChampionBattles = enrichedPlayer.statistics().get("globalmap_champion").battles();
-                Long clanWarTotalBattles = clanWarAbsoluteBattles + clanWarMiddleBattles + clanWarChampionBattles;
-                return MemberActivityJpa.create(
-                    enrichedPlayer.accountId(),
-                    DateUtils.fromTimestamp(enrichedPlayer.updatedAt()),
-                    enrichedPlayer.nickname(),
-                    EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role()),
-                    clan.getId(),
-                    DateUtils.fromTimestamp(basicPlayer.joinedAt()),
-                    DateUtils.fromTimestamp(enrichedPlayer.lastBattleTime()),
-                    enrichedPlayer.statistics().get("random").battles(),
-                    enrichedPlayer.statistics().get("stronghold_skirmish").battles(),
-                    enrichedPlayer.statistics().get("stronghold_defense").battles(),
-                    clanWarTotalBattles
-                );
-            })
-            .toList();
-    }
-
-    private static List<MemberJpa> createMembers(Optional<EnrichedClan> clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
-        if (clanDetails.isEmpty()) {
-            throw new ClanNotFoundException("Clan not found");
-        }
-        return clanDetails.get().members().stream()
-            .map(basicPlayer -> {
-                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
-                Rank rank = EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role());
-                if (rank == null) {
-                    throw new InvalidWargamingResponseException("Unknown rank %s".formatted(basicPlayer.role()));
-                }
-                return MemberJpa.create(
-                    enrichedPlayer.accountId(),
-                    enrichedPlayer.nickname(),
-                    clan,
-                    rank,
-                    DateUtils.fromTimestamp(basicPlayer.joinedAt()),
-                    DateUtils.fromTimestamp(enrichedPlayer.updatedAt())
-                );
-            })
-            .toList();
     }
 
     public void importExistingClanActivity(MultipartFile file, Long clanId) {
@@ -205,5 +168,57 @@ public class ClanTrackerService {
         }
     }
 
+    private static List<MemberJpa> createMembers(Optional<EnrichedClan> clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
+        if (clanDetails.isEmpty()) {
+            throw new ClanNotFoundException("Clan not found");
+        }
+        return clanDetails.get().members().stream()
+            .map(basicPlayer -> {
+                // merge the player info from the basic and enriched player info and create a MemberJpa object from it.
+                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
+                Rank rank = EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role());
+                if (rank == null) {
+                    throw new InvalidWargamingResponseException("Unknown rank %s".formatted(basicPlayer.role()));
+                }
+                return MemberJpa.create(
+                    enrichedPlayer.accountId(),
+                    enrichedPlayer.nickname(),
+                    clan,
+                    rank,
+                    DateUtils.fromTimestamp(basicPlayer.joinedAt()),
+                    DateUtils.fromTimestamp(enrichedPlayer.updatedAt())
+                );
+            })
+            .toList();
+    }
+
+    private static List<MemberActivityJpa> createMemberActivityJpas(Optional<EnrichedClan> clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
+        if (clanDetails.isEmpty()) {
+            throw new ClanNotFoundException("Clan not found");
+        }
+        return clanDetails.get().members().stream()
+            .map(basicPlayer -> {
+                // merge the player info from the basic and enriched player info and create a MemberActivityJpa object from it.
+                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
+                Long clanWarAbsoluteBattles = enrichedPlayer.statistics().get("globalmap_absolute").battles();
+                Long clanWarMiddleBattles = enrichedPlayer.statistics().get("globalmap_middle").battles();
+                Long clanWarChampionBattles = enrichedPlayer.statistics().get("globalmap_champion").battles();
+                Long clanWarTotalBattles = clanWarAbsoluteBattles + clanWarMiddleBattles + clanWarChampionBattles;
+                return MemberActivityJpa.create(
+                    enrichedPlayer.accountId(),
+                    DateUtils.fromTimestamp(enrichedPlayer.updatedAt()),
+                    enrichedPlayer.nickname(),
+                    EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role()),
+                    clan.getId(),
+                    DateUtils.fromTimestamp(basicPlayer.joinedAt()),
+                    DateUtils.fromTimestamp(enrichedPlayer.lastBattleTime()),
+                    enrichedPlayer.statistics().get("random").battles(),
+                    enrichedPlayer.statistics().get("stronghold_skirmish").battles(),
+                    enrichedPlayer.statistics().get("stronghold_defense").battles(),
+                    clanWarTotalBattles
+                );
+            })
+            .toList();
+    }
 
 }

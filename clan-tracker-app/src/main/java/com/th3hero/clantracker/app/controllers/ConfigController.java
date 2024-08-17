@@ -5,8 +5,7 @@ import com.th3hero.clantracker.app.dto.config.ConfigUpload;
 import com.th3hero.clantracker.app.services.ConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.NonNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -32,7 +31,7 @@ public class ConfigController {
     @Operation(summary = "Create a new config if non exists")
     @ResponseStatus(HttpStatus.CREATED)
     public Config createConfig(
-        @RequestBody @NonNull @Valid ConfigUpload configUpload
+        @RequestBody @NotNull(message = "Config upload must be provided.") ConfigUpload configUpload
     ) {
         return configService.createConfig(configUpload);
     }
@@ -40,7 +39,7 @@ public class ConfigController {
     @PatchMapping
     @Operation(summary = "Update the existing config")
     public Config updateConfig(
-        @RequestBody @NonNull @Valid ConfigUpload configUpload
+        @RequestBody @NotNull(message = "Config upload must be provided.") ConfigUpload configUpload
     ) {
         return configService.updateConfig(configUpload);
     }

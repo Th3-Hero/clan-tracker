@@ -23,6 +23,10 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>io.swagger.core.v3</groupId>
+			<artifactId>swagger-annotations-jakarta</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -43,6 +47,7 @@
 				<configuration>
 					<jsonLibrary>jackson2</jsonLibrary>
 					<classes>
+						<class>com.th3hero.clantracker.api.ui.Config</class>
 						<class>com.th3hero.clantracker.api.ui.Rank</class>
 						<class>com.th3hero.clantracker.api.ui.Clan</class>
 						<class>com.th3hero.clantracker.api.ui.MemberActivity</class>

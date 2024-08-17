@@ -78,7 +78,7 @@ class SchedulingServiceTest {
     }
 
     @Test
-    void changeMemberActivityFetchJobInterval() throws SchedulerException {
+    void updateMemberActivityFetchJobInterval() throws SchedulerException {
         final Long clanId = 1L;
         final var config = TestEntities.configJpa();
         final var triggerKey = TriggerKey.triggerKey(clanId.toString(), "member_activity_fetch_group");
@@ -97,13 +97,13 @@ class SchedulingServiceTest {
         when(configService.getConfigJpa())
             .thenReturn(config);
 
-        schedulingService.changeMemberActivityFetchJobInterval(clanId);
+        schedulingService.updateMemberActivityFetchJobInterval(clanId);
 
         verify(scheduler).rescheduleJob(eq(triggerKey), any(Trigger.class));
     }
 
     @Test
-    void changeMemberActivityFetchJobInterval_noExistingTrigger() throws SchedulerException {
+    void updateMemberActivityFetchJobInterval_noExistingTrigger() throws SchedulerException {
         final Long clanId = 1L;
         final var triggerKey = TriggerKey.triggerKey(clanId.toString(), "member_activity_fetch_group");
 
@@ -112,7 +112,7 @@ class SchedulingServiceTest {
             .thenThrow(SchedulerException.class);
 
         assertThatExceptionOfType(SchedulingException.class)
-            .isThrownBy(() -> schedulingService.changeMemberActivityFetchJobInterval(clanId));
+            .isThrownBy(() -> schedulingService.updateMemberActivityFetchJobInterval(clanId));
     }
 
     @Test
