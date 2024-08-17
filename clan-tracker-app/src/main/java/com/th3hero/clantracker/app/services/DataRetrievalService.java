@@ -1,8 +1,5 @@
 package com.th3hero.clantracker.app.services;
 
-import com.th3hero.clantracker.jpa.ui.ActivityInfo;
-import com.th3hero.clantracker.jpa.ui.Clan;
-import com.th3hero.clantracker.jpa.ui.MemberActivity;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.jpa.entities.ClanJpa;
 import com.th3hero.clantracker.jpa.entities.ConfigJpa;
@@ -10,6 +7,9 @@ import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
 import com.th3hero.clantracker.jpa.entities.MemberJpa;
 import com.th3hero.clantracker.jpa.repositories.ClanRepository;
 import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
+import com.th3hero.clantracker.jpa.ui.ActivityInfo;
+import com.th3hero.clantracker.jpa.ui.Clan;
+import com.th3hero.clantracker.jpa.ui.MemberActivity;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class DataRetrievalService {
             .orElseThrow(() -> new ClanNotFoundException("Failed to find clan with id: %s".formatted(clanId)));
 
         if (startDate == null || endDate == null) {
-            endDate = LocalDateTime.now();
+            endDate = LocalDate.now().atStartOfDay();
             startDate = endDate.minusDays(configJpa.getDefaultActivitySummaryDateRange());
         } else if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date must be before end date");

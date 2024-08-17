@@ -1,8 +1,8 @@
 package com.th3hero.clantracker.app.controllers;
 
+import com.th3hero.clantracker.app.services.DataRetrievalService;
 import com.th3hero.clantracker.jpa.ui.ActivityInfo;
 import com.th3hero.clantracker.jpa.ui.Clan;
-import com.th3hero.clantracker.app.services.DataRetrievalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;

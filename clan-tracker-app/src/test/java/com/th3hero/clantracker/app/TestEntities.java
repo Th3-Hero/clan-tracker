@@ -42,6 +42,19 @@ public class TestEntities {
         return member;
     }
 
+    public static MemberJpa memberJpa(int seed, ClanJpa clanJpa) {
+        var member = MemberJpa.builder()
+            .id((long) seed)
+            .name("Test Member%s".formatted(seed))
+            .clanJpa(clanJpa)
+            .rank(MemberJpa.Rank.JUNIOR_OFFICER)
+            .joinedClan(LocalDateTime.now().minusMonths(seed))
+            .lastUpdated(LocalDateTime.now())
+            .build();
+        clanJpa.getMembers().add(member);
+        return member;
+    }
+
     public static MemberActivityJpa memberActivityJpa(int seed) {
         var member = memberJpa(1);
         return MemberActivityJpa.builder()
