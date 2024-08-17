@@ -4,5 +4,15 @@
       "name": "wargaming.api-token",
       "type": "java.lang.String",
       "description": "Wargaming API token."
-  }
-] }
+    },
+    {
+      "name": "cors.urls",
+      "type": "java.lang.String",
+      "description": "CSV list of URLs to allow CORS for."
+    },
+    {
+      "name": "cors.methods",
+      "type": "java.lang.String",
+      "description": "CSV list of HTTP methods to allow CORS for."
+    }
+  ] }

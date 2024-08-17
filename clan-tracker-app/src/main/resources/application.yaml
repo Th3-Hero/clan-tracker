@@ -35,3 +35,6 @@ wargaming:
   api-token:
 server:
   port: 5002
+cors:
+  urls: http://localhost:5173/
+  methods: GET, POST, DELETE
