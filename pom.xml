@@ -22,16 +22,16 @@
 	</properties>
 
 	<modules>
+		<module>clan-tracker-api</module>
 		<module>clan-tracker-app</module>
 		<module>clan-tracker-jpa</module>
-		<module>clan-tracker-lib</module>
 	</modules>
 
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>com.th3hero</groupId>
-				<artifactId>clan-tracker-lib</artifactId>
+				<artifactId>clan-tracker-api</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>

@@ -16,7 +16,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.th3hero</groupId>
-			<artifactId>clan-tracker-lib</artifactId>
+			<artifactId>clan-tracker-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.th3hero</groupId>

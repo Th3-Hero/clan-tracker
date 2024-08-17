@@ -1,4 +1,4 @@
-package com.th3hero.clantracker.lib.wargaming;
+package com.th3hero.clantracker.app.wargaming;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.NonNull;

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.th3hero</groupId>
+		<artifactId>clan-tracker</artifactId>
+		<version>0.0.1</version>
+	</parent>
+
+	<artifactId>clan-tracker-api</artifactId>
+	<description>Clan tracker api module</description>
+	<packaging>jar</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.kseth</groupId>
+			<artifactId>development-util</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>cz.habarta.typescript-generator</groupId>
+				<artifactId>typescript-generator-maven-plugin</artifactId>
+				<version>3.2.1263</version>
+				<executions>
+					<execution>
+						<id>generate</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>process-classes</phase>
+					</execution>
+				</executions>
+				<configuration>
+					<jsonLibrary>jackson2</jsonLibrary>
+					<classes>
+						<class>com.th3hero.clantracker.api.ui.Rank</class>
+						<class>com.th3hero.clantracker.api.ui.Clan</class>
+						<class>com.th3hero.clantracker.api.ui.MemberActivity</class>
+						<class>com.th3hero.clantracker.api.ui.ActivityInfo</class>
+					</classes>
+					<outputKind>module</outputKind>
+					<outputFile>./target/typescript-generator/clan-tracker-dtos.d.ts</outputFile>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

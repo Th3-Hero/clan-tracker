@@ -1,4 +1,4 @@
-package com.th3hero.clantracker.jpa.ui;
+package com.th3hero.clantracker.api.ui;
 
 import lombok.NonNull;
 

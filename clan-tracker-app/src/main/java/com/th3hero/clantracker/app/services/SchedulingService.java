@@ -1,7 +1,7 @@
 package com.th3hero.clantracker.app.services;
 
 import com.th3hero.clantracker.app.jobs.MemberActivityFetchJob;
-import com.th3hero.clantracker.lib.utils.DateUtils;
+import com.th3hero.clantracker.app.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;

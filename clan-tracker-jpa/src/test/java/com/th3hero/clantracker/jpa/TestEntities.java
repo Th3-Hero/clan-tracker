@@ -1,5 +1,6 @@
 package com.th3hero.clantracker.jpa;
 
+import com.th3hero.clantracker.api.ui.Rank;
 import com.th3hero.clantracker.jpa.entities.ClanJpa;
 import com.th3hero.clantracker.jpa.entities.ConfigJpa;
 import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
@@ -33,7 +34,7 @@ public class TestEntities {
             .id((long) seed)
             .name("Test Member%s".formatted(seed))
             .clanJpa(clan)
-            .rank(MemberJpa.Rank.JUNIOR_OFFICER)
+            .rank(Rank.JUNIOR_OFFICER)
             .joinedClan(LocalDateTime.now().minusMonths(seed))
             .lastUpdated(LocalDateTime.now())
             .build();

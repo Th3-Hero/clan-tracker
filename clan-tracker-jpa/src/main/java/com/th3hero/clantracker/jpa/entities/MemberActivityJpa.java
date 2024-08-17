@@ -1,6 +1,6 @@
 package com.th3hero.clantracker.jpa.entities;
 
-import com.th3hero.clantracker.jpa.entities.MemberJpa.Rank;
+import com.th3hero.clantracker.api.ui.Rank;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.Hibernate;

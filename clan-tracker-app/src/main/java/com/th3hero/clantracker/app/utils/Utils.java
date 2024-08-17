@@ -1,4 +1,4 @@
-package com.th3hero.clantracker.lib.utils;
+package com.th3hero.clantracker.app.utils;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

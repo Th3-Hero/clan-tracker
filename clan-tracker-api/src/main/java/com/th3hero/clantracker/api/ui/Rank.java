@@ -1,0 +1,15 @@
+package com.th3hero.clantracker.api.ui;
+
+public enum Rank {
+    COMMANDER,
+    EXECUTIVE_OFFICER,
+    COMBAT_OFFICER,
+    PERSONNEL_OFFICER,
+    INTELLIGENCE_OFFICER,
+    QUARTERMASTER,
+    RECRUITMENT_OFFICER,
+    JUNIOR_OFFICER,
+    PRIVATE,
+    RECRUIT,
+    RESERVIST
+}

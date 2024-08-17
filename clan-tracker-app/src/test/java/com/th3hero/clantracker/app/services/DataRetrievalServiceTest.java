@@ -6,7 +6,7 @@ import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
 import com.th3hero.clantracker.jpa.entities.MemberJpa;
 import com.th3hero.clantracker.jpa.repositories.ClanRepository;
 import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
-import com.th3hero.clantracker.jpa.ui.MemberActivity;
+import com.th3hero.clantracker.api.ui.MemberActivity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

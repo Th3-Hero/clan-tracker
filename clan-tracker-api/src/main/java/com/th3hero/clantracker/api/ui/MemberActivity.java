@@ -1,6 +1,6 @@
-package com.th3hero.clantracker.jpa.ui;
+package com.th3hero.clantracker.api.ui;
 
-import com.th3hero.clantracker.jpa.entities.MemberJpa.Rank;
+
 import lombok.NonNull;
 
 import java.time.LocalDateTime;

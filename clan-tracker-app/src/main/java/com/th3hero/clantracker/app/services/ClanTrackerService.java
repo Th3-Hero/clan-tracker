@@ -1,20 +1,20 @@
 package com.th3hero.clantracker.app.services;
 
+import com.th3hero.clantracker.api.ui.Rank;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.app.exceptions.InvalidWargamingResponseException;
 import com.th3hero.clantracker.jpa.entities.ClanJpa;
 import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
 import com.th3hero.clantracker.jpa.entities.MemberJpa;
-import com.th3hero.clantracker.jpa.entities.MemberJpa.Rank;
 import com.th3hero.clantracker.jpa.repositories.ClanRepository;
 import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
 import com.th3hero.clantracker.jpa.repositories.MemberRepository;
-import com.th3hero.clantracker.lib.utils.DateUtils;
-import com.th3hero.clantracker.lib.utils.Utils;
-import com.th3hero.clantracker.lib.wargaming.ClanInfo.EnrichedClan;
-import com.th3hero.clantracker.lib.wargaming.ClanInfo.EnrichedClan.BasicPlayer;
-import com.th3hero.clantracker.lib.wargaming.ClanSearch;
-import com.th3hero.clantracker.lib.wargaming.MemberInfo.EnrichedPlayer;
+import com.th3hero.clantracker.app.utils.DateUtils;
+import com.th3hero.clantracker.app.utils.Utils;
+import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
+import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan.BasicPlayer;
+import com.th3hero.clantracker.app.wargaming.ClanSearch;
+import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;

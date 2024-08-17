@@ -1,5 +1,6 @@
 package com.th3hero.clantracker.jpa.entities;
 
+import com.th3hero.clantracker.api.ui.Rank;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.Hibernate;
@@ -42,20 +43,6 @@ public class MemberJpa implements Serializable {
     @NonNull
     @Column
     private LocalDateTime lastUpdated;
-
-    public enum Rank {
-        COMMANDER,
-        EXECUTIVE_OFFICER,
-        COMBAT_OFFICER,
-        PERSONNEL_OFFICER,
-        INTELLIGENCE_OFFICER,
-        QUARTERMASTER,
-        RECRUITMENT_OFFICER,
-        JUNIOR_OFFICER,
-        PRIVATE,
-        RECRUIT,
-        RESERVIST
-    }
 
     public static MemberJpa create(Long id, String name, ClanJpa clanJpa, Rank rank, LocalDateTime joinedClan, LocalDateTime lastUpdated) {
         return MemberJpa.builder()

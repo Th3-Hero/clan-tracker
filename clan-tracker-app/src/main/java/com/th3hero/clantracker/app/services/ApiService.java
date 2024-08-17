@@ -1,12 +1,12 @@
 package com.th3hero.clantracker.app.services;
 
 import com.th3hero.clantracker.app.exceptions.InvalidWargamingResponseException;
-import com.th3hero.clantracker.lib.wargaming.ClanInfo;
-import com.th3hero.clantracker.lib.wargaming.ClanInfo.EnrichedClan;
-import com.th3hero.clantracker.lib.wargaming.ClanSearch;
-import com.th3hero.clantracker.lib.wargaming.ClanSearch.BasicClan;
-import com.th3hero.clantracker.lib.wargaming.MemberInfo;
-import com.th3hero.clantracker.lib.wargaming.MemberInfo.EnrichedPlayer;
+import com.th3hero.clantracker.app.wargaming.ClanInfo;
+import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
+import com.th3hero.clantracker.app.wargaming.ClanSearch;
+import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
+import com.th3hero.clantracker.app.wargaming.MemberInfo;
+import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
