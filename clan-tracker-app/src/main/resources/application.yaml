@@ -36,5 +36,5 @@ wargaming:
 server:
   port: 5002
 cors:
-  urls: http://localhost:5173/
+  urls:
   methods: GET, POST, DELETE
