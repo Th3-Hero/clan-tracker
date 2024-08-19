@@ -158,7 +158,6 @@ public class ClanTrackerService {
                     advances,
                     cwTotal
                 );
-
                 memberData.add(memberActivityJpa);
             }
 

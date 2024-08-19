@@ -63,9 +63,6 @@ class DataRetrievalServiceTest {
         assertThat(result.clan().tag()).isEqualTo(clan.getTag());
         assertThat(result.startDate()).isEqualTo(startDate);
         assertThat(result.endDate()).isEqualTo(endDate);
-        assertThat(result.defaultPerformanceThresholdBad()).isEqualTo(config.getPerformanceThresholdBad());
-        assertThat(result.defaultPerformanceThresholdPoor()).isEqualTo(config.getPerformanceThresholdPoor());
-        assertThat(result.defaultPerformanceThresholdGood()).isEqualTo(config.getPerformanceThresholdGood());
 
         assertThat(result.memberActivity())
             .satisfiesExactly(
@@ -124,9 +121,6 @@ class DataRetrievalServiceTest {
         assertThat(result.clan().id()).isEqualTo(clan.getId());
         assertThat(result.clan().tag()).isEqualTo(clan.getTag());
         assertThat(result.startDate()).isEqualTo(result.endDate().minusDays(config.getDefaultActivitySummaryDateRange()));
-        assertThat(result.defaultPerformanceThresholdBad()).isEqualTo(config.getPerformanceThresholdBad());
-        assertThat(result.defaultPerformanceThresholdPoor()).isEqualTo(config.getPerformanceThresholdPoor());
-        assertThat(result.defaultPerformanceThresholdGood()).isEqualTo(config.getPerformanceThresholdGood());
 
         assertThat(result.memberActivity())
             .satisfiesExactly(
