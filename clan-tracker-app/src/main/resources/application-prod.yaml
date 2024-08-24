@@ -31,3 +31,5 @@ logging:
       file-name-pattern: ${LOG_FILE}.%d{yyyy-MM}.%i.gz
 server:
   port: 5002
+cors:
+  urls: https://th3-hero.github.io
