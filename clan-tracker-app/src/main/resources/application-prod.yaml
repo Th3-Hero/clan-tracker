@@ -29,3 +29,5 @@ logging:
       max-file-size: 50MB
       max-history: 10
       file-name-pattern: ${LOG_FILE}.%d{yyyy-MM}.%i.gz
+server:
+  port: 5002

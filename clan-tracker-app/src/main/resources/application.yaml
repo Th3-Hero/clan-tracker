@@ -33,8 +33,6 @@ springdoc:
     use-root-path: true
 wargaming:
   api-token:
-server:
-  port: 5002
 cors:
   urls:
   methods: GET, POST, DELETE
