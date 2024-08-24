@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.th3hero</groupId>
 		<artifactId>clan-tracker</artifactId>
-		<version>1.0.0-BETA</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>clan-tracker-api</artifactId>
