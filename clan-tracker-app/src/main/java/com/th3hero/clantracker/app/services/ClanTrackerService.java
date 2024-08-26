@@ -192,6 +192,7 @@ public class ClanTrackerService {
     }
 
     private static List<MemberActivityJpa> createMemberActivityJpas(Optional<EnrichedClan> clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
+        final LocalDateTime fetchDateTime = LocalDateTime.now();
         if (clanDetails.isEmpty()) {
             throw new ClanNotFoundException("Clan not found");
         }
@@ -205,7 +206,7 @@ public class ClanTrackerService {
                 Long clanWarTotalBattles = clanWarAbsoluteBattles + clanWarMiddleBattles + clanWarChampionBattles;
                 return MemberActivityJpa.create(
                     enrichedPlayer.accountId(),
-                    DateUtils.fromTimestamp(enrichedPlayer.updatedAt()),
+                    fetchDateTime,
                     enrichedPlayer.nickname(),
                     EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role()),
                     clan.getId(),
