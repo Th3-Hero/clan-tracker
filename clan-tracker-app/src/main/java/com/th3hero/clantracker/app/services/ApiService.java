@@ -35,6 +35,7 @@ public class ApiService {
 
     /**
      * Calls the Wargaming API with the given request string and returns the response as the given response type
+     *
      * @param requestString The request string to be appended to the base URL
      * @param responseType The class of the response type
      * @param <T> The type of the response
@@ -62,8 +63,10 @@ public class ApiService {
 
     /**
      * Searches the wargaming api for a clan with the given tag
+     *
      * @param clanTag The tag of the clan to search for
      * @return An {@link Optional} containing the clan if it was found, or an empty {@link Optional} if it was not found
+     * @throws InvalidWargamingResponseException If the response from the Wargaming API is invalid.
      */
     public Optional<BasicClan> clanSearch(String clanTag) {
         String requestString = "/clans/list/?application_id=%s&search=%s&fields=%s".formatted(
@@ -71,11 +74,13 @@ public class ApiService {
             clanTag,
             clanSearchFields()
         );
+
         final var response = callApi(requestString, ClanSearch.class);
         if (!"ok".equals(response.status())) {
             log.info(response.status());
             throw new InvalidWargamingResponseException("%s".formatted(response.error()));
         }
+
         return response.data().stream()
             .filter(clan -> clan.tag().equals(clanTag))
             .findFirst();
@@ -83,6 +88,7 @@ public class ApiService {
 
     /**
      * Gets basic clan details and basic clan info.
+     *
      * @param clanId The id of the clan to get details for.
      * @return An {@link Optional} containing the clan if it was found, or an empty {@link Optional} if it was not found.
      */
@@ -96,6 +102,7 @@ public class ApiService {
         if (!"ok".equals(response.status())) {
             throw new InvalidWargamingResponseException("%s".formatted(response.error()));
         }
+
         return response.data().values().stream()
             .filter(clan -> clan.clanId().equals(clanId))
             .findFirst();
@@ -103,6 +110,7 @@ public class ApiService {
 
     /**
      * Gets detailed information about the members of a clan. Auto splits the request into batches of 100 members.
+     *
      * @param memberIds The ids of the members to get details for.
      * @return A list of {@link EnrichedPlayer} objects containing the details of the members.
      */
@@ -152,7 +160,6 @@ public class ApiService {
         return String.join(",", List.of(
             "updated_at",
             "account_id",
-            "clan_id",
             "nickname",
             "last_battle_time",
             "statistics.random.battles",

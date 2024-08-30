@@ -3,6 +3,8 @@ package com.th3hero.clantracker.app.services;
 import com.th3hero.clantracker.api.ui.Rank;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.app.exceptions.InvalidWargamingResponseException;
+import com.th3hero.clantracker.app.wargaming.ClanInfo;
+import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
 import com.th3hero.clantracker.jpa.entities.ClanJpa;
 import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
 import com.th3hero.clantracker.jpa.entities.MemberJpa;
@@ -15,6 +17,8 @@ import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan.BasicPlayer;
 import com.th3hero.clantracker.app.wargaming.ClanSearch;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
@@ -27,10 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,24 +41,23 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ClanTrackerService {
 
+    private final Validator validator;
+
     private final ApiService apiService;
     private final SchedulingService schedulingService;
     private final ClanRepository clanRepository;
     private final MemberRepository memberRepository;
     private final MemberActivityRepository memberActivityRepository;
 
+
     /**
      * Add a clan for tracking.
      * @param clanTag the clan tag to add for tracking.
      */
     public void addClanForTracking(String clanTag) {
-        Optional<ClanSearch.BasicClan> clan = apiService.clanSearch(clanTag);
-        if (clan.isEmpty()) {
-            log.debug("No clan with tag {} was found", clanTag);
-            throw new ClanNotFoundException("No clan with tag %s was found".formatted(clanTag));
-        }
-        fetchClanMembers(clan.get().id());
-        schedulingService.scheduleMemberActivityFetchJob(clan.get().id());
+        BasicClan clan = basicClanValidator(clanTag, apiService.clanSearch(clanTag));
+        fetchClanMembers(clan.id());
+        schedulingService.scheduleMemberActivityFetchJob(clan.id());
     }
 
     /**
@@ -81,19 +81,14 @@ public class ClanTrackerService {
      */
     public void fetchClanMembers(Long clanId) {
         // get clan info and basic member info
-        Optional<EnrichedClan> clanDetails = apiService.clanDetails(clanId);
-        if (clanDetails.isEmpty()) {
-            log.info("Clan with id {} not found", clanId);
-            throw new ClanNotFoundException("Clan with id %s not found".formatted(clanId));
-        }
-        List<Long> memberIds = clanDetails.get().members().stream()
+        EnrichedClan clanDetails = enrichedClanValidator(clanId, apiService.clanDetails(clanId));
+        List<Long> memberIds = clanDetails.members().stream()
             .map(BasicPlayer::id)
             .toList();
         // get detailed member info for the members in the clan
-        List<EnrichedPlayer> members = apiService.memberDetails(memberIds);
+        List<EnrichedPlayer> members = enrichedPlayerValidator(apiService.memberDetails(memberIds));
         if (members.size() != memberIds.size()) {
             log.error("Failed to fetch all members for clan {}", clanId);
-            throw new InvalidWargamingResponseException("Failed to fetch all members for clan %s".formatted(clanId));
         }
 
         Map<Long, EnrichedPlayer> enrichedPlayerMap = members.stream()
@@ -101,8 +96,8 @@ public class ClanTrackerService {
 
         ClanJpa clan = clanRepository.save(
             ClanJpa.create(
-                clanDetails.get().clanId(),
-                clanDetails.get().tag()
+                clanDetails.clanId(),
+                clanDetails.tag()
             )
         );
 
@@ -167,11 +162,9 @@ public class ClanTrackerService {
         }
     }
 
-    private static List<MemberJpa> createMembers(Optional<EnrichedClan> clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
-        if (clanDetails.isEmpty()) {
-            throw new ClanNotFoundException("Clan not found");
-        }
-        return clanDetails.get().members().stream()
+    private static List<MemberJpa> createMembers(EnrichedClan clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
+        return clanDetails.members().stream()
+            .filter(basicPlayer -> enrichedPlayerMap.containsKey(basicPlayer.id()))
             .map(basicPlayer -> {
                 // merge the player info from the basic and enriched player info and create a MemberJpa object from it.
                 EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
@@ -191,12 +184,10 @@ public class ClanTrackerService {
             .toList();
     }
 
-    private static List<MemberActivityJpa> createMemberActivityJpas(Optional<EnrichedClan> clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
+    private static List<MemberActivityJpa> createMemberActivityJpas(EnrichedClan clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
         final LocalDateTime fetchDateTime = LocalDateTime.now();
-        if (clanDetails.isEmpty()) {
-            throw new ClanNotFoundException("Clan not found");
-        }
-        return clanDetails.get().members().stream()
+        return clanDetails.members().stream()
+            .filter(basicPlayer -> enrichedPlayerMap.containsKey(basicPlayer.id()))
             .map(basicPlayer -> {
                 // merge the player info from the basic and enriched player info and create a MemberActivityJpa object from it.
                 EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
@@ -221,4 +212,113 @@ public class ClanTrackerService {
             .toList();
     }
 
+    /**
+     * Get the validated clan info for a specific clan.
+     * @param clanTag the clan tag to search for.
+     * @param clan the clan info to validate.
+     * @return the validated clan info.
+     * @throws ClanNotFoundException if the clan is not found.
+     * @throws InvalidWargamingResponseException if the clan info is invalid.
+     */
+    private BasicClan basicClanValidator(String clanTag, Optional<BasicClan> clan) {
+        if (clan.isEmpty()) {
+            throw new ClanNotFoundException("Failed to find clan with tag %s".formatted(clanTag));
+        }
+
+        Set<ConstraintViolation<BasicClan>> violations = validator.validate(clan.get());
+        if (!violations.isEmpty()) {
+            throw new InvalidWargamingResponseException(validationErrorMessage(violations));
+        }
+        return clan.get();
+    }
+
+    /**
+     * Get the validated enriched clan info for a specific clan.
+     * Any invalid members will not be included in the returned clan info.
+     * @param clanId the id of the clan to validate.
+     * @param clan the enriched clan info to validate.
+     * @return the validated enriched clan info.
+     * @throws ClanNotFoundException if the clan is not found.
+     * @throws InvalidWargamingResponseException if the clan info is invalid.
+     */
+    private EnrichedClan enrichedClanValidator(Long clanId, Optional<EnrichedClan> clan) {
+        if (clan.isEmpty()) {
+            throw new ClanNotFoundException("Failed to find clan with id %s".formatted(clanId));
+        }
+
+        List<BasicPlayer> members = clan.get().members();
+        List<BasicPlayer> validatedMembers = new ArrayList<>();
+        for (BasicPlayer member : members) {
+            Set<ConstraintViolation<BasicPlayer>> memberViolations = validator.validate(member);
+            if (!memberViolations.isEmpty()) {
+                log.error("Member violation: {}", validationErrorMessage(memberViolations));
+            }
+            validatedMembers.add(member);
+        }
+        EnrichedClan enrichedClan = new EnrichedClan(clan.get().clanId(), clan.get().tag(), validatedMembers);
+        Set<ConstraintViolation<EnrichedClan>> violations = validator.validate(enrichedClan);
+        if (!violations.isEmpty()) {
+            throw new InvalidWargamingResponseException(validationErrorMessage(violations));
+        }
+
+        return clan.get();
+    }
+
+    /**
+     * Get a list of validated members. Any invalid members will not be included in the returned list.
+     * @param members the members to validate.
+     * @return the validated members.
+     */
+    private List<EnrichedPlayer> enrichedPlayerValidator(List<EnrichedPlayer> members) {
+        List<EnrichedPlayer> validatedMembers = new ArrayList<>();
+        for (EnrichedPlayer member : members) {
+            Set<ConstraintViolation<EnrichedPlayer>> memberViolations = validator.validate(member);
+            if (!memberViolations.isEmpty()) {
+                log.error("Member violation: {}", validationErrorMessage(memberViolations));
+            }
+            validatedMembers.add(member);
+        }
+        return validatedMembers;
+    }
+
+    /**
+     * Get the validated enriched clan info for a specific clan.
+     * An exception will be thrown if ALL members of the clan cannot be validated.
+     * @param clanId the id of the clan to validate.
+     * @param clan the enriched clan info to validate.
+     * @return the validated enriched clan info.
+     * @throws ClanNotFoundException if the clan is not found.
+     * @throws InvalidWargamingResponseException if the clan info is invalid.
+     */
+    private EnrichedClan enrichedClanValidatorStrict(Long clanId, Optional<EnrichedClan> clan) {
+        if (clan.isEmpty()) {
+            throw new ClanNotFoundException("Failed to find clan with id %s".formatted(clanId));
+        }
+
+        Set<ConstraintViolation<EnrichedClan>> violations = validator.validate(clan.get());
+        if (!violations.isEmpty()) {
+            throw new InvalidWargamingResponseException(validationErrorMessage(violations));
+        }
+
+        return clan.get();
+    }
+
+    /**
+     * Get a list of validated members. An exception will be thrown if ANY of members cannot be validated.
+     * @param members the members to validate.
+     * @return the validated members.
+     */
+    private List<EnrichedPlayer> enrichedPlayerValidatorStrict(List<EnrichedPlayer> members) {
+        var violations = validator.validate(members);
+        if (!violations.isEmpty()) {
+            throw new InvalidWargamingResponseException(validationErrorMessage(violations));
+        }
+        return members;
+    }
+
+    private <T> String validationErrorMessage(Set<ConstraintViolation<T>> violations) {
+        return violations.stream()
+            .map(ConstraintViolation::getMessage)
+            .collect(Collectors.joining(", "));
+    }
 }

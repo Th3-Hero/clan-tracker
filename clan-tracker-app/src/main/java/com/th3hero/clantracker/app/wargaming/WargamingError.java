@@ -1,10 +1,11 @@
 package com.th3hero.clantracker.app.wargaming;
 
-import lombok.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 
 public record WargamingError(
-    @NonNull String message,
-    @NonNull String field,
-    @NonNull String value,
-    @NonNull Long code
+    @NotNull String message,
+    @NotNull String field,
+    @NotNull String value,
+    @NotNull Long code
 ) { }

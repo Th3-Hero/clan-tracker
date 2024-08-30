@@ -1,23 +1,23 @@
 package com.th3hero.clantracker.app.wargaming;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import lombok.NonNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
 
 public record MemberInfo(
-    @NonNull String status,
-    WargamingError error,
-    Map<String, EnrichedPlayer> data
+    @NotNull String status,
+    @Valid WargamingError error,
+    @Valid Map<String, EnrichedPlayer> data
 ) {
     public record EnrichedPlayer(
-        @JsonAlias("account_id") @NonNull Long accountId,
-        @JsonAlias("clan_id") @NonNull Long clanId,
-        @JsonAlias("updated_at") @NonNull Long updatedAt,
-        @JsonAlias("last_battle_time") @NonNull Long lastBattleTime,
-        @NonNull String nickname,
-        @NonNull Map<String, Battle> statistics
+        @JsonAlias("account_id") @NotNull Long accountId,
+        @JsonAlias("updated_at") @NotNull Long updatedAt,
+        @JsonAlias("last_battle_time") @NotNull Long lastBattleTime,
+        @NotNull String nickname,
+        @NotNull @Valid Map<String, Battle> statistics
     ) {
-        public record Battle(@NonNull Long battles) { }
+        public record Battle(@NotNull Long battles) { }
     }
 }

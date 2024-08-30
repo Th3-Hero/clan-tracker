@@ -3,6 +3,7 @@ package com.th3hero.clantracker.app.services;
 import com.th3hero.clantracker.app.TestEntities;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.app.exceptions.InvalidWargamingResponseException;
+import com.th3hero.clantracker.jpa.entities.MemberJpa;
 import com.th3hero.clantracker.jpa.repositories.ClanRepository;
 import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
 import com.th3hero.clantracker.jpa.repositories.MemberRepository;
@@ -11,8 +12,10 @@ import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan.BasicPlayer;
 import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer.Battle;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,6 +42,9 @@ class ClanTrackerServiceTest {
     private MemberRepository memberRepository;
     @Mock
     private MemberActivityRepository memberActivityRepository;
+
+    @Mock
+    private Validator validator;
 
     @InjectMocks
     private ClanTrackerService clanTrackerService;
@@ -146,9 +153,20 @@ class ClanTrackerServiceTest {
             .thenReturn(Optional.of(enrichedClan));
         when(apiService.memberDetails(List.of(1L, 2L, 3L)))
             .thenReturn(enrichedPlayers);
+        when(clanRepository.save(any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThatExceptionOfType(InvalidWargamingResponseException.class)
-            .isThrownBy(() -> clanTrackerService.fetchClanMembers(clanId));
+        clanTrackerService.fetchClanMembers(clanId);
+
+        ArgumentCaptor<List<MemberJpa>> memberCaptor = ArgumentCaptor.forClass(List.class);
+        verify(memberRepository).saveAll(memberCaptor.capture());
+        List<MemberJpa> savedMembers = memberCaptor.getValue();
+        assertThat(savedMembers).hasSize(2);
+        assertThat(savedMembers).extracting(MemberJpa::getId)
+            .containsExactly(2L, 3L);
+
+        verify(memberActivityRepository).saveAll(any());
+        verify(clanRepository, times(2)).save(any());
     }
 
     private static EnrichedClan getEnrichedClan(long clanId, String clanTag) {
@@ -170,9 +188,9 @@ class ClanTrackerServiceTest {
             "globalmap_champion", new Battle(56L)
         );
         return List.of(
-            new EnrichedPlayer(1L, 1234L, 54321L, 56L, "FRED", stats),
-            new EnrichedPlayer(2L, 1234L, 54321L, 56L, "BOB", stats),
-            new EnrichedPlayer(3L, 1234L, 54321L, 56L, "ALICE", stats)
+            new EnrichedPlayer(1L, 1234L, 54321L, "FRED", stats),
+            new EnrichedPlayer(2L, 1234L, 54321L, "BOB", stats),
+            new EnrichedPlayer(3L, 1234L, 54321L, "ALICE", stats)
         );
     }
 }

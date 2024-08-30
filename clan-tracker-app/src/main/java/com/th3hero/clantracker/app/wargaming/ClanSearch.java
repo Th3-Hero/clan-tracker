@@ -1,14 +1,15 @@
 package com.th3hero.clantracker.app.wargaming;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import lombok.NonNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
 public record ClanSearch(
-    @NonNull String status,
-    WargamingError error,
-    List<BasicClan> data
+    @NotNull String status,
+    @Valid WargamingError error,
+    @Valid List<BasicClan> data
 ) {
-    public record BasicClan(@JsonAlias("clan_id") @NonNull Long id, @NonNull String tag) { }
+    public record BasicClan(@JsonAlias("clan_id") @NotNull Long id, @NotNull String tag) { }
 }
