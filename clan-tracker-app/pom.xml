@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.th3hero</groupId>
 		<artifactId>clan-tracker</artifactId>
-		<version>1.0.2</version>
+		<version>1.0.3</version>
 	</parent>
 
 	<artifactId>clan-tracker-app</artifactId>
@@ -38,6 +38,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.retry</groupId>
+			<artifactId>spring-retry</artifactId>
 		</dependency>
 	</dependencies>
 

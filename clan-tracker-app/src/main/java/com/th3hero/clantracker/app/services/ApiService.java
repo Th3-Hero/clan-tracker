@@ -1,17 +1,16 @@
 package com.th3hero.clantracker.app.services;
 
 import com.th3hero.clantracker.app.exceptions.InvalidWargamingResponseException;
-import com.th3hero.clantracker.app.wargaming.ClanInfo;
+import com.th3hero.clantracker.app.wargaming.*;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
-import com.th3hero.clantracker.app.wargaming.ClanSearch;
 import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
-import com.th3hero.clantracker.app.wargaming.MemberInfo;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -29,6 +28,7 @@ public class ApiService {
     private String apiToken;
 
     private final RestClient restClient;
+    private final RetryTemplate retryTemplate;
 
     private static final String DEFAULT_ERROR_MESSAGE = "Invalid response from Wargaming API";
     private static final int MAX_BATCH_SIZE = 100;
@@ -41,24 +41,32 @@ public class ApiService {
      * @param <T> The type of the response
      * @return The response from the Wargaming API
      */
-    private <T> T callApi(String requestString, Class<T> responseType) {
-        String apiBaseUrl = "https://api.worldoftanks.com";
-        String uri = apiBaseUrl + "/wot" + requestString;
-        final var response = restClient.get()
-            .uri(uri)
-            .accept(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .onStatus(
-                HttpStatusCode::isError,
-                (clientRequest, clientResponse) -> {
-                    throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
-                })
-            .toEntity(responseType);
-        final var responseBody = response.getBody();
-        if (responseBody == null) {
-            throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
-        }
-        return responseBody;
+    private <T extends WargamingResponse> T callApi(String requestString, Class<T> responseType) {
+        return retryTemplate.execute(context -> {
+            String apiBaseUrl = "https://api.worldoftanks.com";
+            String uri = apiBaseUrl + "/wot" + requestString;
+            final var response = restClient.get()
+                .uri(uri)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(
+                    HttpStatusCode::isError,
+                    (clientRequest, clientResponse) -> {
+                        log.warn("Retrying request due to error status code. URI: {} Status: {}", uri, clientResponse.getStatusCode());
+                        throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
+                    })
+                .toEntity(responseType);
+            final var responseBody = response.getBody();
+            if (responseBody == null) {
+                log.warn("Retrying. Null response body from Wargaming API. URI: {}", uri);
+                throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
+            }
+            if (!"ok".equals(responseBody.status())) {
+                log.warn("Retrying request due to error. URI: {} Error: {}", uri, responseBody.error());
+                throw new InvalidWargamingResponseException("Invalid response from Wargaming API: %s".formatted(responseBody.error()));
+            }
+            return responseBody;
+        });
     }
 
     /**
@@ -76,11 +84,6 @@ public class ApiService {
         );
 
         final var response = callApi(requestString, ClanSearch.class);
-        if (!"ok".equals(response.status())) {
-            log.info(response.status());
-            throw new InvalidWargamingResponseException("%s".formatted(response.error()));
-        }
-
         return response.data().stream()
             .filter(clan -> clan.tag().equals(clanTag))
             .findFirst();
@@ -99,10 +102,6 @@ public class ApiService {
             clanDetailsFields()
         );
         final var response = callApi(requestString, ClanInfo.class);
-        if (!"ok".equals(response.status())) {
-            throw new InvalidWargamingResponseException("%s".formatted(response.error()));
-        }
-
         return response.data().values().stream()
             .filter(clan -> clan.clanId().equals(clanId))
             .findFirst();
@@ -125,9 +124,6 @@ public class ApiService {
                 memberDetailsFields()
             );
             final var response = callApi(requestString, MemberInfo.class);
-            if (!"ok".equals(response.status())) {
-                throw new InvalidWargamingResponseException("%s".formatted(response.error()));
-            }
             allPlayers.addAll(response.data().values().stream().toList());
         }
         return allPlayers;

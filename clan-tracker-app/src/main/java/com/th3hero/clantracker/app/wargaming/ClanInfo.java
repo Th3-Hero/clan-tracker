@@ -11,7 +11,7 @@ public record ClanInfo(
     @NotNull String status,
     @Valid WargamingError error,
     @Valid Map<String, EnrichedClan> data
-) {
+) implements WargamingResponse {
 
     public record EnrichedClan(
         @JsonAlias("clan_id") @NotNull Long clanId,

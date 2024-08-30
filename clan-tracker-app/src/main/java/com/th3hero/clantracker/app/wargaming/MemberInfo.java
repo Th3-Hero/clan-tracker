@@ -10,7 +10,7 @@ public record MemberInfo(
     @NotNull String status,
     @Valid WargamingError error,
     @Valid Map<String, EnrichedPlayer> data
-) {
+) implements WargamingResponse {
     public record EnrichedPlayer(
         @JsonAlias("account_id") @NotNull Long accountId,
         @JsonAlias("updated_at") @NotNull Long updatedAt,

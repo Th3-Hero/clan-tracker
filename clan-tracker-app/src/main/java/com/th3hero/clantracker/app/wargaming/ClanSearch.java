@@ -10,6 +10,6 @@ public record ClanSearch(
     @NotNull String status,
     @Valid WargamingError error,
     @Valid List<BasicClan> data
-) {
+) implements WargamingResponse {
     public record BasicClan(@JsonAlias("clan_id") @NotNull Long id, @NotNull String tag) { }
 }
