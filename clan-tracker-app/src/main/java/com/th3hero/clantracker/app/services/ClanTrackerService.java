@@ -4,6 +4,7 @@ import com.th3hero.clantracker.api.ui.Rank;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.app.exceptions.InvalidWargamingResponseException;
 import com.th3hero.clantracker.app.utils.DateUtils;
+import com.th3hero.clantracker.app.utils.EntityFactory;
 import com.th3hero.clantracker.app.utils.Utils;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan.BasicPlayer;
@@ -206,40 +207,14 @@ public class ClanTrackerService {
     private static List<PlayerActivityJpa> createPlayerActivityJpas(List<MemberJpa> members, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
         final LocalDateTime fetchDateTime = LocalDateTime.now();
         return members.stream()
-            .map(member -> {
-                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(member.getPlayerJpa().getId());
-                Long clanWarAbsoluteBattles = enrichedPlayer.statistics().get("globalmap_absolute").battles();
-                Long clanWarMiddleBattles = enrichedPlayer.statistics().get("globalmap_middle").battles();
-                Long clanWarChampionBattles = enrichedPlayer.statistics().get("globalmap_champion").battles();
-                Long clanWarTotalBattles = clanWarAbsoluteBattles + clanWarMiddleBattles + clanWarChampionBattles;
-                return PlayerActivityJpa.create(
-                    member.getPlayerJpa(),
-                    fetchDateTime,
-                    DateUtils.fromTimestamp(enrichedPlayer.lastBattleTime()),
-                    enrichedPlayer.statistics().get("random").battles(),
-                    enrichedPlayer.statistics().get("stronghold_skirmish").battles(),
-                    enrichedPlayer.statistics().get("stronghold_defense").battles(),
-                    clanWarTotalBattles
-                );
-            })
+            .map(member -> EntityFactory.createPlayerActivityJpa(member, enrichedPlayerMap, fetchDateTime))
             .toList();
     }
 
     private static List<PlayerSnapshotJpa> createPlayerSnapshotJpas(ClanJpa clanJpa, List<MemberJpa> members, Map<Long, BasicPlayer> basicPlayerMap, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
         final LocalDateTime fetchDateTime = LocalDateTime.now();
         return members.stream()
-            .map(member -> {
-                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(member.getPlayerJpa().getId());
-                BasicPlayer basicPlayer = basicPlayerMap.get(enrichedPlayer.accountId());
-                return PlayerSnapshotJpa.create(
-                    member.getPlayerJpa(),
-                    fetchDateTime,
-                    clanJpa,
-                    enrichedPlayer.nickname(),
-                    EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role()),
-                    DateUtils.fromTimestamp(basicPlayer.joinedAt())
-                );
-            })
+            .map(member -> EntityFactory.createPlayerSnapshotJpa(clanJpa, member, basicPlayerMap, enrichedPlayerMap, fetchDateTime))
             .toList();
     }
 

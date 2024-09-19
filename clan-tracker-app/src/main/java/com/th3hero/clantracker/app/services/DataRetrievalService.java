@@ -2,6 +2,7 @@ package com.th3hero.clantracker.app.services;
 
 import com.th3hero.clantracker.api.ui.*;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
+import com.th3hero.clantracker.app.utils.ApiFactory;
 import com.th3hero.clantracker.jpa.clan.ClanJpa;
 import com.th3hero.clantracker.jpa.clan.ClanRepository;
 import com.th3hero.clantracker.jpa.config.ConfigJpa;
@@ -20,12 +21,10 @@ import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -122,21 +121,7 @@ public class DataRetrievalService {
             throw new EntityNotFoundException("No activity data found for player %s between %s and %s".formatted(playerId, startDate, endDate));
         }
 
-        Long randomsDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalRandomBattles);
-        Long skirmishDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalSkirmishBattles);
-        Long advancesDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalAdvancesBattles);
-        Long clanWarDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalClanWarBattles);
-
-        return new PlayerInfo(
-            playerId,
-            playerActivityJpas.getFirst().getPlayerJpa().getName(),
-            startDate,
-            endDate,
-            randomsDiff,
-            skirmishDiff,
-            advancesDiff,
-            clanWarDiff
-        );
+        return ApiFactory.createPlayerInfo(playerId, playerActivityJpas, startDate, endDate);
     }
 
     private List<MemberActivity> createMemberActivityList(LocalDateTime startDate, LocalDateTime endDate, ClanJpa clanJpa) {
@@ -145,45 +130,9 @@ public class DataRetrievalService {
             // get all the member activity data for the player within the specified time period
             List<PlayerActivityJpa> memberActivityJpas = findPlayerActivityJpas(member.getPlayerJpa().getId(), startDate, endDate);
 
-            Long randomsDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalRandomBattles);
-            Long skirmishDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalSkirmishBattles);
-            Long advancesDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalAdvancesBattles);
-            Long clanWarDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalClanWarBattles);
-
-            MemberActivity activity = new MemberActivity(
-                member.getPlayerJpa().getId(),
-                member.getPlayerJpa().getName(),
-                member.getRank(),
-                member.getClanJpa().getId(),
-                member.getJoinedClan(),
-                daysInClan(member),
-                getLastBattle(memberActivityJpas),
-                randomsDiff,
-                skirmishDiff,
-                advancesDiff,
-                clanWarDiff
-            );
-            memberActivity.add(activity);
+            memberActivity.add(ApiFactory.createMemberActivity(member, memberActivityJpas));
         }
         return memberActivity;
-    }
-
-    private LocalDateTime getLastBattle(List<PlayerActivityJpa> memberActivityJpas) {
-        return memberActivityJpas.stream()
-            .map(PlayerActivityJpa::getFetchedAt)
-            .max(LocalDateTime::compareTo)
-            .orElse(LocalDateTime.now());
-    }
-
-    private static Long daysInClan(MemberJpa memberJpa) {
-        return Duration.between(memberJpa.getJoinedClan(), LocalDateTime.now()).toDays();
-    }
-
-    private static Long getDiff(List<PlayerActivityJpa> memberJpas, Function<PlayerActivityJpa, Long> map) {
-        List<Long> values = memberJpas.stream()
-            .map(map)
-            .toList();
-        return values.stream().max(Long::compareTo).orElse(0L) - values.stream().min(Long::compareTo).orElse(0L);
     }
 
     private List<PlayerJpa> searchPlayer(String name) {
