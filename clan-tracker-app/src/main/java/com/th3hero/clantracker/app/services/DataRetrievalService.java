@@ -1,16 +1,16 @@
 package com.th3hero.clantracker.app.services;
 
-import com.th3hero.clantracker.api.ui.Config;
-import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
-import com.th3hero.clantracker.jpa.entities.ClanJpa;
-import com.th3hero.clantracker.jpa.entities.ConfigJpa;
-import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
-import com.th3hero.clantracker.jpa.entities.MemberJpa;
-import com.th3hero.clantracker.jpa.repositories.ClanRepository;
-import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
 import com.th3hero.clantracker.api.ui.ActivityInfo;
 import com.th3hero.clantracker.api.ui.Clan;
+import com.th3hero.clantracker.api.ui.Config;
 import com.th3hero.clantracker.api.ui.MemberActivity;
+import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
+import com.th3hero.clantracker.jpa.clan.ClanJpa;
+import com.th3hero.clantracker.jpa.clan.ClanRepository;
+import com.th3hero.clantracker.jpa.config.ConfigJpa;
+import com.th3hero.clantracker.jpa.member.MemberJpa;
+import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
+import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -31,10 +31,11 @@ import java.util.function.Function;
 public class DataRetrievalService {
     private final ConfigService configService;
     private final ClanRepository clanRepository;
-    private final MemberActivityRepository memberActivityRepository;
+    private final PlayerActivityRepository playerActivityRepository;
 
     /**
      * Get the default config values for the app. Configurations are dynamic and thus need to be retrieved.
+     *
      * @return the default config values.
      */
     public Config getDefaultConfig() {
@@ -49,6 +50,7 @@ public class DataRetrievalService {
 
     /**
      * Get a list of all tracked clans.
+     *
      * @return a list of tracked clans.
      */
     public List<Clan> getClanList() {
@@ -59,6 +61,7 @@ public class DataRetrievalService {
 
     /**
      * Get activity data for a specific clan within a time period. If start date and/or end date period is not specified, activity info for the last x days is returned(x days being specified by config).
+     *
      * @param clanId the id of the clan to get activity data for.
      * @param startDate the start date of the activity data.
      * @param endDate the end date of the activity data.
@@ -94,20 +97,20 @@ public class DataRetrievalService {
         List<MemberActivity> memberActivity = new ArrayList<>();
         for (MemberJpa member : clanJpa.getMembers()) {
             // get all the member activity data for the player within the specified time period
-            Specification<MemberActivityJpa> spec = memberActivitySpec(member.getId(), startDate, endDate);
-            List<MemberActivityJpa> memberActivityJpas = memberActivityRepository.findBy(
+            Specification<PlayerActivityJpa> spec = playerActivitySpec(member.getPlayerJpa().getId(), startDate, endDate);
+            List<PlayerActivityJpa> memberActivityJpas = playerActivityRepository.findBy(
                 spec,
                 FluentQuery.FetchableFluentQuery::all
             );
 
-            Long randomsDiff = getDiff(memberActivityJpas, MemberActivityJpa::getTotalRandomBattles);
-            Long skirmishDiff = getDiff(memberActivityJpas, MemberActivityJpa::getTotalSkirmishBattles);
-            Long advancesDiff = getDiff(memberActivityJpas, MemberActivityJpa::getTotalAdvancesBattles);
-            Long clanWarDiff = getDiff(memberActivityJpas, MemberActivityJpa::getTotalClanWarBattles);
+            Long randomsDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalRandomBattles);
+            Long skirmishDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalSkirmishBattles);
+            Long advancesDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalAdvancesBattles);
+            Long clanWarDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalClanWarBattles);
 
             MemberActivity activity = new MemberActivity(
-                member.getId(),
-                member.getName(),
+                member.getPlayerJpa().getId(),
+                member.getPlayerJpa().getName(),
                 member.getRank(),
                 member.getClanJpa().getId(),
                 member.getJoinedClan(),
@@ -123,9 +126,9 @@ public class DataRetrievalService {
         return memberActivity;
     }
 
-    private LocalDateTime getLastBattle(List<MemberActivityJpa> memberActivityJpas) {
+    private LocalDateTime getLastBattle(List<PlayerActivityJpa> memberActivityJpas) {
         return memberActivityJpas.stream()
-            .map(MemberActivityJpa::getUpdatedAt)
+            .map(PlayerActivityJpa::getFetchedAt)
             .max(LocalDateTime::compareTo)
             .orElse(LocalDateTime.now());
     }
@@ -134,14 +137,14 @@ public class DataRetrievalService {
         return Duration.between(memberJpa.getJoinedClan(), LocalDateTime.now()).toDays();
     }
 
-    private static Long getDiff(List<MemberActivityJpa> memberJpas, Function<MemberActivityJpa, Long> map) {
+    private static Long getDiff(List<PlayerActivityJpa> memberJpas, Function<PlayerActivityJpa, Long> map) {
         List<Long> values = memberJpas.stream()
             .map(map)
             .toList();
         return values.stream().max(Long::compareTo).orElse(0L) - values.stream().min(Long::compareTo).orElse(0L);
     }
 
-    private static Specification<MemberActivityJpa> memberActivitySpec(Long memberId, LocalDateTime startDate, LocalDateTime endDate) {
+    private static Specification<PlayerActivityJpa> playerActivitySpec(Long memberId, LocalDateTime startDate, LocalDateTime endDate) {
         return (root, query, builder) ->
             builder.and(
                 builder.equal(root.get("memberId"), memberId),

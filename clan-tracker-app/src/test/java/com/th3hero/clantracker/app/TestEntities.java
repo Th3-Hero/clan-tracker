@@ -2,10 +2,10 @@ package com.th3hero.clantracker.app;
 
 import com.th3hero.clantracker.api.ui.Rank;
 import com.th3hero.clantracker.app.dto.config.ConfigUpload;
-import com.th3hero.clantracker.jpa.entities.ClanJpa;
-import com.th3hero.clantracker.jpa.entities.ConfigJpa;
+import com.th3hero.clantracker.jpa.clan.ClanJpa;
+import com.th3hero.clantracker.jpa.config.ConfigJpa;
 import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
-import com.th3hero.clantracker.jpa.entities.MemberJpa;
+import com.th3hero.clantracker.jpa.member.MemberJpa;
 
 import java.time.LocalDateTime;
 

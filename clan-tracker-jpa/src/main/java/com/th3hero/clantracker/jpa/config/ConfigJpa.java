@@ -1,4 +1,4 @@
-package com.th3hero.clantracker.jpa.entities;
+package com.th3hero.clantracker.jpa.config;
 
 import jakarta.persistence.*;
 import lombok.*;

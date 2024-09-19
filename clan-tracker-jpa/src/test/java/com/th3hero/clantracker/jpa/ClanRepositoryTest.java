@@ -1,7 +1,7 @@
 package com.th3hero.clantracker.jpa;
 
-import com.th3hero.clantracker.jpa.entities.ClanJpa;
-import com.th3hero.clantracker.jpa.repositories.ClanRepository;
+import com.th3hero.clantracker.jpa.clan.ClanJpa;
+import com.th3hero.clantracker.jpa.clan.ClanRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

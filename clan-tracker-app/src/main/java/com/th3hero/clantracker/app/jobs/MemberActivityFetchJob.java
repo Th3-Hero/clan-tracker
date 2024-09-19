@@ -18,6 +18,6 @@ public class MemberActivityFetchJob implements Job {
     @Override
     public void execute(JobExecutionContext executionContext) {
         Long clanId = executionContext.getTrigger().getJobDataMap().getLong(CLAN_ID);
-        clanTrackerService.fetchClanMembers(clanId);
+        clanTrackerService.fetchMemberDetails(clanId);
     }
 }

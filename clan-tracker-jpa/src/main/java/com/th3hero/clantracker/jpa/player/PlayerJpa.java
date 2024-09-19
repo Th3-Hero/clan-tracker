@@ -1,45 +1,41 @@
-package com.th3hero.clantracker.jpa.entities;
+package com.th3hero.clantracker.jpa.player;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
 import org.hibernate.Hibernate;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Getter
 @Setter
 @Entity
 @Builder
-@ToString(exclude = "members")
-@Table(name = "clan")
+@ToString
+@Table(name = "player")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-public class ClanJpa implements Serializable {
+public class PlayerJpa implements Serializable {
 
     @Id
+    @NonNull
     @Setter(AccessLevel.NONE)
     private Long id;
 
     @NonNull
     @Column
-    private String tag;
+    private String name;
 
-    @Setter(AccessLevel.NONE)
-    @Builder.Default
-    @ManyToMany
-    private List<MemberJpa> members = new ArrayList<>();
-
-    public static ClanJpa create(Long aLong, String tag) {
-        return ClanJpa.builder()
-            .id(aLong)
-            .tag(tag)
+    public static PlayerJpa create(Long id, String name) {
+        return PlayerJpa.builder()
+            .id(id)
+            .name(name)
             .build();
     }
-
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -49,12 +45,13 @@ public class ClanJpa implements Serializable {
             return false;
         }
 
-        ClanJpa clanJpa = (ClanJpa) o;
-        return Objects.equals(id, clanJpa.id) && tag.equals(clanJpa.tag);
+        PlayerJpa playerJpa = (PlayerJpa) o;
+        return id.equals(playerJpa.id) && name.equals(playerJpa.name);
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
 }

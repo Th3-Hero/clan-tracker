@@ -3,20 +3,21 @@ package com.th3hero.clantracker.app.services;
 import com.th3hero.clantracker.api.ui.Rank;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.app.exceptions.InvalidWargamingResponseException;
-import com.th3hero.clantracker.app.wargaming.ClanInfo;
-import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
-import com.th3hero.clantracker.jpa.entities.ClanJpa;
-import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
-import com.th3hero.clantracker.jpa.entities.MemberJpa;
-import com.th3hero.clantracker.jpa.repositories.ClanRepository;
-import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
-import com.th3hero.clantracker.jpa.repositories.MemberRepository;
 import com.th3hero.clantracker.app.utils.DateUtils;
 import com.th3hero.clantracker.app.utils.Utils;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan.BasicPlayer;
-import com.th3hero.clantracker.app.wargaming.ClanSearch;
+import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
+import com.th3hero.clantracker.jpa.clan.ClanJpa;
+import com.th3hero.clantracker.jpa.clan.ClanRepository;
+import com.th3hero.clantracker.jpa.member.MemberJpa;
+import com.th3hero.clantracker.jpa.member.MemberRepository;
+import com.th3hero.clantracker.jpa.player.PlayerJpa;
+import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
+import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
+import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotJpa;
+import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -47,21 +48,23 @@ public class ClanTrackerService {
     private final SchedulingService schedulingService;
     private final ClanRepository clanRepository;
     private final MemberRepository memberRepository;
-    private final MemberActivityRepository memberActivityRepository;
-
+    private final PlayerActivityRepository playerActivityRepository;
+    private final PlayerSnapshotRepository playerSnapshotRepository;
 
     /**
      * Add a clan for tracking.
+     *
      * @param clanTag the clan tag to add for tracking.
      */
     public void addClanForTracking(String clanTag) {
         BasicClan clan = basicClanValidator(clanTag, apiService.clanSearch(clanTag));
-        fetchClanMembers(clan.id());
+        fetchMemberDetails(clan.id());
         schedulingService.scheduleMemberActivityFetchJob(clan.id());
     }
 
     /**
      * Remove a clan from tracking.
+     *
      * @param clanTag the clan tag to remove from tracking.
      */
     public void removeClanFromTracking(String clanTag) {
@@ -77,9 +80,10 @@ public class ClanTrackerService {
 
     /**
      * Fetch clan members data for a specific clan.
+     *
      * @param clanId the id of the clan to fetch members for.
      */
-    public void fetchClanMembers(Long clanId) {
+    public void fetchMemberDetails(Long clanId) {
         // get clan info and basic member info
         EnrichedClan clanDetails = enrichedClanValidator(clanId, apiService.clanDetails(clanId));
         List<Long> memberIds = clanDetails.members().stream()
@@ -93,6 +97,8 @@ public class ClanTrackerService {
 
         Map<Long, EnrichedPlayer> enrichedPlayerMap = members.stream()
             .collect(Collectors.toMap(EnrichedPlayer::accountId, Function.identity()));
+        Map<Long, BasicPlayer> basicPlayerMap = clanDetails.members().stream()
+            .collect(Collectors.toMap(BasicPlayer::id, Function.identity()));
 
         ClanJpa clan = clanRepository.save(
             ClanJpa.create(
@@ -102,27 +108,32 @@ public class ClanTrackerService {
         );
 
         List<MemberJpa> memberJpas = createMembers(clanDetails, enrichedPlayerMap, clan);
+        memberJpas = memberRepository.saveAll(memberJpas);
 
-        memberRepository.saveAll(memberJpas);
+        List<PlayerActivityJpa> playerActivityJpas = createPlayerActivityJpas(memberJpas, enrichedPlayerMap);
+        playerActivityRepository.saveAll(playerActivityJpas);
 
-        List<MemberActivityJpa> memberActivityJpas = createMemberActivityJpas(clanDetails, enrichedPlayerMap, clan);
-
-        memberActivityRepository.saveAll(memberActivityJpas);
+        List<PlayerSnapshotJpa> playerSnapshotJpas = createPlayerSnapshotJpas(clan, memberJpas, basicPlayerMap, enrichedPlayerMap);
+        playerSnapshotRepository.saveAll(playerSnapshotJpas);
 
         clan.getMembers().addAll(memberJpas);
         clanRepository.save(clan);
     }
 
     public void importExistingClanActivity(MultipartFile file, Long clanId) {
+        ClanJpa clanJpa = clanRepository.findById(clanId)
+            .orElseThrow(() -> new ClanNotFoundException("Failed to find tracked clan with id %s. In order to import data make sure the clan is being tracked and the provided id is correct.".formatted(clanId)));
+
         try {
             InputStream inputStream = file.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
             String line;
-            List<MemberActivityJpa> memberData = new ArrayList<>();
+            List<PlayerActivityJpa> playerActivityData = new ArrayList<>();
+            List<PlayerSnapshotJpa> playerSnapshotData = new ArrayList<>();
             while ((line = reader.readLine()) != null) {
                 List<String> data = List.of(line.split(","));
-                // dateTime, playerId, playerName, rank, joinedClanDate, lastBattleDateTime, randoms, skirms, advances, cwTotal
+                // dateTime, playerId, playerName, rank, joinedClanDate, lastBattleDateTime, randoms, skirmishes, advances, cwTotal
                 if (data.size() != 10) {
                     log.error("Invalid data: {}", data);
                     return;
@@ -137,26 +148,36 @@ public class ClanTrackerService {
                 if (!data.get(6).isBlank()) {
                     randoms = Long.parseLong(data.get(6));
                 }
-                Long skirms = Long.parseLong(data.get(7));
+                Long skirmishes = Long.parseLong(data.get(7));
                 Long advances = Long.parseLong(data.get(8));
                 Long cwTotal = Long.parseLong(data.get(9));
-                MemberActivityJpa memberActivityJpa = MemberActivityJpa.create(
-                    playerId,
+
+                PlayerJpa playerJpa = PlayerJpa.create(playerId, playerName);
+
+                PlayerActivityJpa playerActivityJpa = PlayerActivityJpa.create(
+                    playerJpa,
                     updatedAt,
-                    playerName,
-                    rank,
-                    clanId,
-                    joinedClan,
                     lastBattle,
                     randoms,
-                    skirms,
+                    skirmishes,
                     advances,
                     cwTotal
                 );
-                memberData.add(memberActivityJpa);
+                playerActivityData.add(playerActivityJpa);
+
+                PlayerSnapshotJpa playerSnapshotJpa = PlayerSnapshotJpa.create(
+                    playerJpa,
+                    updatedAt,
+                    clanJpa,
+                    playerName,
+                    rank,
+                    joinedClan
+                );
+                playerSnapshotData.add(playerSnapshotJpa);
             }
 
-            memberActivityRepository.saveAll(memberData);
+            playerActivityRepository.saveAll(playerActivityData);
+            playerSnapshotRepository.saveAll(playerSnapshotData);
         } catch (IOException e) {
             log.error("Failed to read file", e);
         }
@@ -173,35 +194,27 @@ public class ClanTrackerService {
                     throw new InvalidWargamingResponseException("Unknown rank %s".formatted(basicPlayer.role()));
                 }
                 return MemberJpa.create(
-                    enrichedPlayer.accountId(),
-                    enrichedPlayer.nickname(),
+                    PlayerJpa.create(enrichedPlayer.accountId(), enrichedPlayer.nickname()),
                     clan,
                     rank,
-                    DateUtils.fromTimestamp(basicPlayer.joinedAt()),
-                    DateUtils.fromTimestamp(enrichedPlayer.updatedAt())
+                    DateUtils.fromTimestamp(basicPlayer.joinedAt())
                 );
             })
             .toList();
     }
 
-    private static List<MemberActivityJpa> createMemberActivityJpas(EnrichedClan clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
+    private static List<PlayerActivityJpa> createPlayerActivityJpas(List<MemberJpa> members, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
         final LocalDateTime fetchDateTime = LocalDateTime.now();
-        return clanDetails.members().stream()
-            .filter(basicPlayer -> enrichedPlayerMap.containsKey(basicPlayer.id()))
-            .map(basicPlayer -> {
-                // merge the player info from the basic and enriched player info and create a MemberActivityJpa object from it.
-                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
+        return members.stream()
+            .map(member -> {
+                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(member.getPlayerJpa().getId());
                 Long clanWarAbsoluteBattles = enrichedPlayer.statistics().get("globalmap_absolute").battles();
                 Long clanWarMiddleBattles = enrichedPlayer.statistics().get("globalmap_middle").battles();
                 Long clanWarChampionBattles = enrichedPlayer.statistics().get("globalmap_champion").battles();
                 Long clanWarTotalBattles = clanWarAbsoluteBattles + clanWarMiddleBattles + clanWarChampionBattles;
-                return MemberActivityJpa.create(
-                    enrichedPlayer.accountId(),
+                return PlayerActivityJpa.create(
+                    member.getPlayerJpa(),
                     fetchDateTime,
-                    enrichedPlayer.nickname(),
-                    EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role()),
-                    clan.getId(),
-                    DateUtils.fromTimestamp(basicPlayer.joinedAt()),
                     DateUtils.fromTimestamp(enrichedPlayer.lastBattleTime()),
                     enrichedPlayer.statistics().get("random").battles(),
                     enrichedPlayer.statistics().get("stronghold_skirmish").battles(),
@@ -212,8 +225,27 @@ public class ClanTrackerService {
             .toList();
     }
 
+    private static List<PlayerSnapshotJpa> createPlayerSnapshotJpas(ClanJpa clanJpa, List<MemberJpa> members, Map<Long, BasicPlayer> basicPlayerMap, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
+        final LocalDateTime fetchDateTime = LocalDateTime.now();
+        return members.stream()
+            .map(member -> {
+                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(member.getPlayerJpa().getId());
+                BasicPlayer basicPlayer = basicPlayerMap.get(enrichedPlayer.accountId());
+                return PlayerSnapshotJpa.create(
+                    member.getPlayerJpa(),
+                    fetchDateTime,
+                    clanJpa,
+                    enrichedPlayer.nickname(),
+                    EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role()),
+                    DateUtils.fromTimestamp(basicPlayer.joinedAt())
+                );
+            })
+            .toList();
+    }
+
     /**
      * Get the validated clan info for a specific clan.
+     *
      * @param clanTag the clan tag to search for.
      * @param clan the clan info to validate.
      * @return the validated clan info.
@@ -235,6 +267,7 @@ public class ClanTrackerService {
     /**
      * Get the validated enriched clan info for a specific clan.
      * Any invalid members will not be included in the returned clan info.
+     *
      * @param clanId the id of the clan to validate.
      * @param clan the enriched clan info to validate.
      * @return the validated enriched clan info.
@@ -266,6 +299,7 @@ public class ClanTrackerService {
 
     /**
      * Get a list of validated members. Any invalid members will not be included in the returned list.
+     *
      * @param members the members to validate.
      * @return the validated members.
      */
@@ -284,6 +318,7 @@ public class ClanTrackerService {
     /**
      * Get the validated enriched clan info for a specific clan.
      * An exception will be thrown if ALL members of the clan cannot be validated.
+     *
      * @param clanId the id of the clan to validate.
      * @param clan the enriched clan info to validate.
      * @return the validated enriched clan info.
@@ -305,6 +340,7 @@ public class ClanTrackerService {
 
     /**
      * Get a list of validated members. An exception will be thrown if ANY of members cannot be validated.
+     *
      * @param members the members to validate.
      * @return the validated members.
      */

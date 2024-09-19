@@ -3,7 +3,7 @@ package com.th3hero.clantracker.app.services;
 import com.th3hero.clantracker.app.TestEntities;
 import com.th3hero.clantracker.app.dto.config.Config;
 import com.th3hero.clantracker.app.dto.config.ConfigUpload;
-import com.th3hero.clantracker.jpa.repositories.ConfigRepository;
+import com.th3hero.clantracker.jpa.config.ConfigRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;

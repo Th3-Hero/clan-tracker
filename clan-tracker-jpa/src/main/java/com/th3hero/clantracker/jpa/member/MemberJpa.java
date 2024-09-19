@@ -1,6 +1,8 @@
-package com.th3hero.clantracker.jpa.entities;
+package com.th3hero.clantracker.jpa.member;
 
 import com.th3hero.clantracker.api.ui.Rank;
+import com.th3hero.clantracker.jpa.clan.ClanJpa;
+import com.th3hero.clantracker.jpa.player.PlayerJpa;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.Hibernate;
@@ -15,20 +17,23 @@ import java.util.Objects;
 @Builder
 @ToString
 @Table(name = "member")
+@IdClass(MemberJpaKey.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberJpa implements Serializable {
 
     @Id
+    @ManyToOne
+    @JoinColumn(name = "player_id")
     @NonNull
     @Setter(AccessLevel.NONE)
-    private Long id;
+    private PlayerJpa playerJpa;
 
-    @NonNull
-    @Column
-    private String name;
-
+    @Id
     @ManyToOne
+    @JoinColumn(name = "clan_id")
+    @NonNull
+    @Setter(AccessLevel.NONE)
     private ClanJpa clanJpa;
 
     @NonNull
@@ -40,18 +45,12 @@ public class MemberJpa implements Serializable {
     @Column
     private LocalDateTime joinedClan;
 
-    @NonNull
-    @Column
-    private LocalDateTime lastUpdated;
-
-    public static MemberJpa create(Long id, String name, ClanJpa clanJpa, Rank rank, LocalDateTime joinedClan, LocalDateTime lastUpdated) {
+    public static MemberJpa create(PlayerJpa playerJpa, ClanJpa clanJpa, Rank rank, LocalDateTime joinedClan) {
         return MemberJpa.builder()
-            .id(id)
-            .name(name)
+            .playerJpa(playerJpa)
             .clanJpa(clanJpa)
             .rank(rank)
             .joinedClan(joinedClan)
-            .lastUpdated(lastUpdated)
             .build();
     }
 
@@ -65,12 +64,21 @@ public class MemberJpa implements Serializable {
         }
 
         MemberJpa memberJpa = (MemberJpa) o;
-        return Objects.equals(id, memberJpa.id);
+        return playerJpa.equals(memberJpa.playerJpa) && clanJpa.equals(memberJpa.clanJpa);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hash(playerJpa, clanJpa);
     }
 
+}
+
+@Getter
+@EqualsAndHashCode
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+class MemberJpaKey implements Serializable {
+    private PlayerJpa playerJpa;
+    private ClanJpa clanJpa;
 }

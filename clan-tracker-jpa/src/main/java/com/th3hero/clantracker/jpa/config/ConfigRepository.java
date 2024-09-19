@@ -1,6 +1,5 @@
-package com.th3hero.clantracker.jpa.repositories;
+package com.th3hero.clantracker.jpa.config;
 
-import com.th3hero.clantracker.jpa.entities.ConfigJpa;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

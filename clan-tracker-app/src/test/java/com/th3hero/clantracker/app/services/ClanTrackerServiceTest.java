@@ -2,11 +2,10 @@ package com.th3hero.clantracker.app.services;
 
 import com.th3hero.clantracker.app.TestEntities;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
-import com.th3hero.clantracker.app.exceptions.InvalidWargamingResponseException;
-import com.th3hero.clantracker.jpa.entities.MemberJpa;
-import com.th3hero.clantracker.jpa.repositories.ClanRepository;
+import com.th3hero.clantracker.jpa.member.MemberJpa;
+import com.th3hero.clantracker.jpa.clan.ClanRepository;
 import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
-import com.th3hero.clantracker.jpa.repositories.MemberRepository;
+import com.th3hero.clantracker.jpa.member.MemberRepository;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan.BasicPlayer;
 import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
@@ -110,7 +109,7 @@ class ClanTrackerServiceTest {
     }
 
     @Test
-    void fetchClanMembers() {
+    void fetchMemberDetails() {
         final var clanTag = "CLAN";
         final var clanId = 1234L;
         final var enrichedClan = getEnrichedClan(clanId, clanTag);
@@ -123,7 +122,7 @@ class ClanTrackerServiceTest {
         when(clanRepository.save(any()))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        clanTrackerService.fetchClanMembers(clanId);
+        clanTrackerService.fetchMemberDetails(clanId);
 
         verify(memberRepository).saveAll(any());
         verify(memberActivityRepository).saveAll(any());
@@ -138,11 +137,11 @@ class ClanTrackerServiceTest {
             .thenReturn(Optional.empty());
 
         assertThatExceptionOfType(ClanNotFoundException.class)
-            .isThrownBy(() -> clanTrackerService.fetchClanMembers(clanId));
+            .isThrownBy(() -> clanTrackerService.fetchMemberDetails(clanId));
     }
 
     @Test
-    void fetchClanMembers_failedMemberDetails() {
+    void fetchMemberDetails_failedMemberDetails() {
         final var clanTag = "CLAN";
         final var clanId = 1234L;
         final var enrichedClan = getEnrichedClan(clanId, clanTag);
@@ -156,7 +155,7 @@ class ClanTrackerServiceTest {
         when(clanRepository.save(any()))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        clanTrackerService.fetchClanMembers(clanId);
+        clanTrackerService.fetchMemberDetails(clanId);
 
         ArgumentCaptor<List<MemberJpa>> memberCaptor = ArgumentCaptor.forClass(List.class);
         verify(memberRepository).saveAll(memberCaptor.capture());
