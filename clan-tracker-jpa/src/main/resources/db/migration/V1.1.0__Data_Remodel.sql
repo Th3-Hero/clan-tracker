@@ -113,3 +113,4 @@ insert into member (
 -- member table was replaced by player table and updated to use composite key
 drop table member_old cascade;
 drop table member_activity;
+drop table clan_members;

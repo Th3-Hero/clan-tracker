@@ -5,6 +5,7 @@ import com.th3hero.clantracker.app.wargaming.*;
 import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
 import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
+import com.th3hero.clantracker.app.wargaming.PlayerInfo.Player;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,9 +15,7 @@ import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -125,6 +124,20 @@ public class ApiService {
             );
             final var response = callApi(requestString, MemberInfo.class);
             allPlayers.addAll(response.data().values().stream().toList());
+        }
+        return allPlayers;
+    }
+
+    public Map<Long, Player> playerInfo(List<Long> playerIds) {
+        Map<Long, Player> allPlayers = new HashMap<>();
+        for (int i = 0; i < playerIds.size(); i += MAX_BATCH_SIZE) {
+            List<Long> batch = playerIds.subList(i, Math.min(i + MAX_BATCH_SIZE, playerIds.size()));
+            String requestString = "/account/info/?application_id=%s&account_id=%s&fields=account_id,nickname".formatted(
+                apiToken,
+                buildIdString(batch)
+            );
+            final var response = callApi(requestString, PlayerInfo.class);
+            allPlayers.putAll(response.data().values().stream().collect(Collectors.toMap(Player::accountId, player -> player)));
         }
         return allPlayers;
     }

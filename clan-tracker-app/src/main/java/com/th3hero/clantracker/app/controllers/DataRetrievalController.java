@@ -1,6 +1,7 @@
 package com.th3hero.clantracker.app.controllers;
 
 import com.th3hero.clantracker.api.ui.Config;
+import com.th3hero.clantracker.api.ui.PlayerInfo;
 import com.th3hero.clantracker.app.services.DataRetrievalService;
 import com.th3hero.clantracker.api.ui.ActivityInfo;
 import com.th3hero.clantracker.api.ui.Clan;
@@ -44,5 +45,15 @@ public class DataRetrievalController {
         @RequestParam(required = false) LocalDateTime endDate
     ) {
         return dataRetrievalService.getClanActivityData(clanId, startDate, endDate);
+    }
+
+    @GetMapping("/player-activity/{idOrName}")
+    @Operation(summary = "Get activity data for a specific player.")
+    public PlayerInfo getPlayerActivityInfo(
+        @PathVariable @NotNull(message = "Player id must be provided.") String idOrName,
+        @RequestParam LocalDateTime startDate,
+        @RequestParam LocalDateTime endDate
+    ) {
+        return dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate);
     }
 }

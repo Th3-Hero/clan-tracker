@@ -1,16 +1,18 @@
 package com.th3hero.clantracker.app.services;
 
-import com.th3hero.clantracker.api.ui.ActivityInfo;
-import com.th3hero.clantracker.api.ui.Clan;
-import com.th3hero.clantracker.api.ui.Config;
-import com.th3hero.clantracker.api.ui.MemberActivity;
+import com.th3hero.clantracker.api.ui.*;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.jpa.clan.ClanJpa;
 import com.th3hero.clantracker.jpa.clan.ClanRepository;
 import com.th3hero.clantracker.jpa.config.ConfigJpa;
 import com.th3hero.clantracker.jpa.member.MemberJpa;
+import com.th3hero.clantracker.jpa.player.PlayerJpa;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
+import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotJpa;
+import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -32,6 +35,7 @@ public class DataRetrievalService {
     private final ConfigService configService;
     private final ClanRepository clanRepository;
     private final PlayerActivityRepository playerActivityRepository;
+    private final PlayerSnapshotRepository playerSnapshotRepository;
 
     /**
      * Get the default config values for the app. Configurations are dynamic and thus need to be retrieved.
@@ -93,15 +97,53 @@ public class DataRetrievalService {
 
     }
 
+    public PlayerInfo getPlayerActivity(@NotNull String idOrName, @NonNull LocalDateTime startDate, @NonNull LocalDateTime endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date must be before end date");
+        }
+
+        Long playerId;
+        if (idOrName.matches("\\d+")) {
+            playerId = Long.parseLong(idOrName);
+        } else {
+            List<PlayerJpa> players = searchPlayer(idOrName);
+            if (players.isEmpty()) {
+                throw new IllegalArgumentException("No player found with the name: %s".formatted(idOrName));
+            }
+            if (players.size() > 1) {
+                String names = players.stream().map(PlayerJpa::getName).collect(Collectors.joining("\n"));
+                throw new IllegalArgumentException("Multiple players found with the name: %s\nPlayers found:\n%s".formatted(idOrName, names));
+            }
+            playerId = players.getFirst().getId();
+        }
+
+        List<PlayerActivityJpa> playerActivityJpas = findPlayerActivityJpas(playerId, startDate, endDate);
+        if (playerActivityJpas.isEmpty()) {
+            throw new EntityNotFoundException("No activity data found for player %s between %s and %s".formatted(playerId, startDate, endDate));
+        }
+
+        Long randomsDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalRandomBattles);
+        Long skirmishDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalSkirmishBattles);
+        Long advancesDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalAdvancesBattles);
+        Long clanWarDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalClanWarBattles);
+
+        return new PlayerInfo(
+            playerId,
+            playerActivityJpas.getFirst().getPlayerJpa().getName(),
+            startDate,
+            endDate,
+            randomsDiff,
+            skirmishDiff,
+            advancesDiff,
+            clanWarDiff
+        );
+    }
+
     private List<MemberActivity> createMemberActivityList(LocalDateTime startDate, LocalDateTime endDate, ClanJpa clanJpa) {
         List<MemberActivity> memberActivity = new ArrayList<>();
         for (MemberJpa member : clanJpa.getMembers()) {
             // get all the member activity data for the player within the specified time period
-            Specification<PlayerActivityJpa> spec = playerActivitySpec(member.getPlayerJpa().getId(), startDate, endDate);
-            List<PlayerActivityJpa> memberActivityJpas = playerActivityRepository.findBy(
-                spec,
-                FluentQuery.FetchableFluentQuery::all
-            );
+            List<PlayerActivityJpa> memberActivityJpas = findPlayerActivityJpas(member.getPlayerJpa().getId(), startDate, endDate);
 
             Long randomsDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalRandomBattles);
             Long skirmishDiff = getDiff(memberActivityJpas, PlayerActivityJpa::getTotalSkirmishBattles);
@@ -144,11 +186,25 @@ public class DataRetrievalService {
         return values.stream().max(Long::compareTo).orElse(0L) - values.stream().min(Long::compareTo).orElse(0L);
     }
 
-    private static Specification<PlayerActivityJpa> playerActivitySpec(Long memberId, LocalDateTime startDate, LocalDateTime endDate) {
+    private List<PlayerJpa> searchPlayer(String name) {
+        List<PlayerSnapshotJpa> players = playerSnapshotRepository.findByNameContaining(name);
+        return players.stream()
+            .map(PlayerSnapshotJpa::getPlayerJpa).distinct().toList();
+    }
+
+    private List<PlayerActivityJpa> findPlayerActivityJpas(Long playerId, LocalDateTime startDate, LocalDateTime endDate) {
+        Specification<PlayerActivityJpa> spec = playerActivitySpec(playerId, startDate, endDate);
+        return playerActivityRepository.findBy(
+            spec,
+            FluentQuery.FetchableFluentQuery::all
+        );
+    }
+
+    private static Specification<PlayerActivityJpa> playerActivitySpec(Long playerId, LocalDateTime startDate, LocalDateTime endDate) {
         return (root, query, builder) ->
             builder.and(
-                builder.equal(root.get("memberId"), memberId),
-                builder.between(root.get("updatedAt"), startDate, endDate)
+                builder.equal(root.get("playerJpa").get("id"), playerId),
+                builder.between(root.get("fetchedAt"), startDate, endDate)
             );
     }
 
