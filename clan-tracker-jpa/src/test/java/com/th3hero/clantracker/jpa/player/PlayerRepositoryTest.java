@@ -35,19 +35,16 @@ class PlayerRepositoryTest {
     void findPlayersWithoutClan() {
         var clanOne = TestEntities.clanJpa(1);
         clanOne = clanRepository.saveAndFlush(clanOne);
-        entityManager.clear();
-
-        var playerOne = TestEntities.playerJpa(1);
-        var playerTwo = TestEntities.playerJpa(2);
-        var playerThree = TestEntities.playerJpa(3);
 
         // Save players before creating members
-        playerRepository.saveAllAndFlush(List.of(playerOne, playerTwo, playerThree));
-        entityManager.clear();
+        var playerOne = playerRepository.save(TestEntities.playerJpa(1));
+        var playerTwo = playerRepository.save(TestEntities.playerJpa(2));
+        var playerThree = playerRepository.save(TestEntities.playerJpa(3));
+        playerRepository.flush();
 
-        var memberOne = MemberJpa.create(playerOne, clanOne, Rank.COMBAT_OFFICER, LocalDateTime.now(), LocalDateTime.now().minusDays(2));
-        var memberTwo = MemberJpa.create(playerTwo, clanOne, Rank.COMBAT_OFFICER, LocalDateTime.now(), LocalDateTime.now().minusHours(3));
-        memberRepository.saveAllAndFlush(List.of(memberOne));
+        var memberOne = MemberJpa.create(playerOne, clanOne, Rank.RECRUIT, LocalDateTime.now().minusMonths(4), LocalDateTime.now().minusHours(3));
+        var memberTwo = MemberJpa.create(playerTwo, clanOne, Rank.RECRUIT, LocalDateTime.now().minusMonths(2), LocalDateTime.now().minusHours(6));
+        memberRepository.saveAllAndFlush(List.of(memberOne, memberTwo));
         entityManager.clear();
 
         var playersWithoutClan = playerRepository.findPlayersWithoutClan();
@@ -57,11 +54,33 @@ class PlayerRepositoryTest {
 
     @Test
     void findPlayersWithoutClan_allHaveClan() {
+        var clanOne = clanRepository.save(TestEntities.clanJpa(1));
+        var clanTwo = clanRepository.save(TestEntities.clanJpa(2));
+        clanRepository.flush();
 
+        // Save players before creating members
+        var playerOne = playerRepository.save(TestEntities.playerJpa(1));
+        var playerTwo = playerRepository.save(TestEntities.playerJpa(2));
+        playerRepository.flush();
+
+        var memberOne = MemberJpa.create(playerOne, clanOne, Rank.RECRUIT, LocalDateTime.now().minusMonths(4), LocalDateTime.now().minusHours(3));
+        var memberTwo = MemberJpa.create(playerTwo, clanTwo, Rank.RECRUIT, LocalDateTime.now().minusMonths(2), LocalDateTime.now().minusHours(6));
+        memberRepository.saveAllAndFlush(List.of(memberOne, memberTwo));
+        entityManager.clear();
+
+        var playersWithoutClan = playerRepository.findPlayersWithoutClan();
+
+        assertThat(playersWithoutClan).isEmpty();
     }
 
     @Test
     void findPlayersWithoutClan_noneHaveClan() {
+        List<PlayerJpa> players =  playerRepository.saveAllAndFlush(List.of(TestEntities.playerJpa(1), TestEntities.playerJpa(2), TestEntities.playerJpa(3)));
 
+        var playersWithoutClan = playerRepository.findPlayersWithoutClan();
+
+        assertThat(playersWithoutClan)
+            .hasSize(3)
+            .containsExactlyInAnyOrderElementsOf(players);
     }
 }

@@ -46,6 +46,7 @@ public class TestEntities {
             .clanJpa(clan)
             .rank(Rank.COMBAT_OFFICER)
             .joinedClan(LocalDateTime.now().minusMonths(seed+2))
+            .lastUpdated(LocalDateTime.now().minusDays(seed))
             .build();
         clan.getMembers().add(member);
         return member;
@@ -58,6 +59,7 @@ public class TestEntities {
             .clanJpa(clanJpa)
             .rank(Rank.COMBAT_OFFICER)
             .joinedClan(LocalDateTime.now().minusMonths(seed+2))
+            .lastUpdated(LocalDateTime.now().minusDays(seed))
             .build();
         clanJpa.getMembers().add(member);
         return member;
@@ -84,6 +86,7 @@ public class TestEntities {
             .clanJpa(clan)
             .rank(Rank.PERSONNEL_OFFICER)
             .joinedClan(LocalDateTime.now().minusMonths(seed+2))
+            .lastUpdated(LocalDateTime.now().minusDays(seed))
             .build();
         clan.getMembers().add(member);
         return PlayerSnapshotJpa.builder()
