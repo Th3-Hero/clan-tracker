@@ -45,12 +45,17 @@ public class MemberJpa implements Serializable {
     @Column
     private LocalDateTime joinedClan;
 
-    public static MemberJpa create(PlayerJpa playerJpa, ClanJpa clanJpa, Rank rank, LocalDateTime joinedClan) {
+    @NonNull
+    @Column
+    private LocalDateTime lastUpdated;
+
+    public static MemberJpa create(PlayerJpa playerJpa, ClanJpa clanJpa, Rank rank, LocalDateTime joinedClan, LocalDateTime lastUpdated) {
         return MemberJpa.builder()
             .playerJpa(playerJpa)
             .clanJpa(clanJpa)
             .rank(rank)
             .joinedClan(joinedClan)
+            .lastUpdated(lastUpdated)
             .build();
     }
 

@@ -49,5 +49,4 @@ class ClanRepositoryTest {
         assertThat(clan).isEmpty();
     }
 
-
 }

@@ -1,12 +1,18 @@
 package com.th3hero.clantracker.app.services;
 
+import com.th3hero.clantracker.api.ui.PlayerInfo;
+import com.th3hero.clantracker.api.ui.Rank;
 import com.th3hero.clantracker.app.TestEntities;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
-import com.th3hero.clantracker.jpa.entities.MemberActivityJpa;
 import com.th3hero.clantracker.jpa.member.MemberJpa;
 import com.th3hero.clantracker.jpa.clan.ClanRepository;
-import com.th3hero.clantracker.jpa.repositories.MemberActivityRepository;
+import com.th3hero.clantracker.jpa.player.PlayerJpa;
+import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
+import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
+import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotJpa;
+import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotRepository;
 import com.th3hero.clantracker.api.ui.MemberActivity;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +37,9 @@ class DataRetrievalServiceTest {
     @Mock
     private ClanRepository clanRepository;
     @Mock
-    private MemberActivityRepository memberActivityRepository;
+    private PlayerActivityRepository playerActivityRepository;
+    @Mock
+    private PlayerSnapshotRepository playerSnapshotRepository;
 
     @InjectMocks
     private DataRetrievalService dataRetrievalService;
@@ -46,16 +54,20 @@ class DataRetrievalServiceTest {
         final var memberOne = TestEntities.memberJpa(1, clan);
         final var memberTwo = TestEntities.memberJpa(2, clan);
         final var memberThree = TestEntities.memberJpa(3, clan);
-        final var memberActivityListOne = createMemberActivityList(memberOne);
-        final var memberActivityListTwo = createMemberActivityList(memberTwo);
-        final var memberActivityListThree = createMemberActivityList(memberThree);
+        final var memberActivityListOne = createPlayerActivityList(memberOne);
+        final var memberActivityListTwo = createPlayerActivityList(memberTwo);
+        final var memberActivityListThree = createPlayerActivityList(memberThree);
 
         when(configService.getConfigJpa())
             .thenReturn(config);
         when(clanRepository.findById(memberOne.getClanJpa().getId()))
             .thenReturn(Optional.of(memberOne.getClanJpa()));
-        when(memberActivityRepository.findBy(any(Specification.class), any()))
-            .thenReturn(memberActivityListOne, memberActivityListTwo, memberActivityListThree);
+        when(playerActivityRepository.findBy(any(Specification.class), any()))
+            .thenReturn(
+                memberActivityListOne,
+                memberActivityListTwo,
+                memberActivityListThree
+            );
 
         final var result = dataRetrievalService.getClanActivityData(memberOne.getClanJpa().getId(), startDate, endDate);
 
@@ -67,16 +79,16 @@ class DataRetrievalServiceTest {
         assertThat(result.memberActivity())
             .satisfiesExactly(
                 memberActivity -> {
-                    assertThat(memberActivity.memberId()).isEqualTo(memberOne.getId());
-                    assertMemberActivity(memberActivity);
+                    assertThat(memberActivity.memberId()).isEqualTo(memberOne.getPlayerJpa().getId());
+                    assertPlayerActivity(memberActivity);
                 },
                 memberActivity -> {
-                    assertThat(memberActivity.memberId()).isEqualTo(memberTwo.getId());
-                    assertMemberActivity(memberActivity);
+                    assertThat(memberActivity.memberId()).isEqualTo(memberTwo.getPlayerJpa().getId());
+                    assertPlayerActivity(memberActivity);
                 },
                 memberActivity -> {
-                    assertThat(memberActivity.memberId()).isEqualTo(memberThree.getId());
-                    assertMemberActivity(memberActivity);
+                    assertThat(memberActivity.memberId()).isEqualTo(memberThree.getPlayerJpa().getId());
+                    assertPlayerActivity(memberActivity);
                 }
             );
     }
@@ -105,15 +117,15 @@ class DataRetrievalServiceTest {
         final var memberOne = TestEntities.memberJpa(1, clan);
         final var memberTwo = TestEntities.memberJpa(2, clan);
         final var memberThree = TestEntities.memberJpa(3, clan);
-        final var memberActivityListOne = createMemberActivityList(memberOne);
-        final var memberActivityListTwo = createMemberActivityList(memberTwo);
-        final var memberActivityListThree = createMemberActivityList(memberThree);
+        final var memberActivityListOne = createPlayerActivityList(memberOne);
+        final var memberActivityListTwo = createPlayerActivityList(memberTwo);
+        final var memberActivityListThree = createPlayerActivityList(memberThree);
 
         when(configService.getConfigJpa())
             .thenReturn(config);
         when(clanRepository.findById(memberOne.getClanJpa().getId()))
             .thenReturn(Optional.of(memberOne.getClanJpa()));
-        when(memberActivityRepository.findBy(any(Specification.class), any()))
+        when(playerActivityRepository.findBy(any(Specification.class), any()))
             .thenReturn(memberActivityListOne, memberActivityListTwo, memberActivityListThree);
 
         final var result = dataRetrievalService.getClanActivityData(memberOne.getClanJpa().getId(), null, null);
@@ -125,16 +137,16 @@ class DataRetrievalServiceTest {
         assertThat(result.memberActivity())
             .satisfiesExactly(
                 memberActivity -> {
-                    assertThat(memberActivity.memberId()).isEqualTo(memberOne.getId());
-                    assertMemberActivity(memberActivity);
+                    assertThat(memberActivity.memberId()).isEqualTo(memberOne.getPlayerJpa().getId());
+                    assertPlayerActivity(memberActivity);
                 },
                 memberActivity -> {
-                    assertThat(memberActivity.memberId()).isEqualTo(memberTwo.getId());
-                    assertMemberActivity(memberActivity);
+                    assertThat(memberActivity.memberId()).isEqualTo(memberTwo.getPlayerJpa().getId());
+                    assertPlayerActivity(memberActivity);
                 },
                 memberActivity -> {
-                    assertThat(memberActivity.memberId()).isEqualTo(memberThree.getId());
-                    assertMemberActivity(memberActivity);
+                    assertThat(memberActivity.memberId()).isEqualTo(memberThree.getPlayerJpa().getId());
+                    assertPlayerActivity(memberActivity);
                 }
             );
 
@@ -157,60 +169,182 @@ class DataRetrievalServiceTest {
             .isThrownBy(() -> dataRetrievalService.getClanActivityData(clanId, startDate, endDate));
     }
 
-    private List<MemberActivityJpa> createMemberActivityList(MemberJpa member) {
-        List<MemberActivityJpa> activityJpas = new ArrayList<>();
+    @SuppressWarnings("unchecked")
+    @Test
+    void getPlayerActivity_validId() {
+        var idOrName = "123";
+        var startDate = LocalDateTime.now();
+        var endDate = LocalDateTime.now().plusMonths(1);
+        var playerId = Long.parseLong(idOrName);
+        var playerActivityList = createPlayerActivityList(TestEntities.memberJpa(1, TestEntities.clanJpa(1)));
+
+        when(playerActivityRepository.findBy(any(Specification.class), any()))
+            .thenReturn(playerActivityList);
+
+        var result = dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate);
+
+        assertThat(result.id()).isEqualTo(playerId);
+        assertPlayerActivity(result);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void getPlayerActivity_validName() {
+        var idOrName = "bob123";
+        var startDate = LocalDateTime.now();
+        var endDate = LocalDateTime.now().plusMonths(1);
+        var player = TestEntities.playerJpa(1);
+        var playerActivityList = createPlayerActivityList(TestEntities.memberJpa(1, TestEntities.clanJpa(1)));
+        var playerSnapshotList = createPlayerSnapshotList(player);
+
+        when(playerSnapshotRepository.findByNameContaining(idOrName))
+            .thenReturn(playerSnapshotList);
+        when(playerActivityRepository.findBy(any(Specification.class), any()))
+            .thenReturn(playerActivityList);
+
+        var result = dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate);
+
+        assertThat(result.id()).isEqualTo(player.getId());
+        assertPlayerActivity(result);
+    }
+
+    @Test
+    void getPlayerActivity_startDateAfterEndDate() {
+        var idOrName = "test";
+        var startDate = LocalDateTime.now();
+        var endDate = LocalDateTime.now().minusDays(1);
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+            .isThrownBy(() -> dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate));
+    }
+
+    @Test
+    void getPlayerActivity_noPlayerWithNameFound() {
+        var idOrName = "unknownPlayer";
+        var startDate = LocalDateTime.now();
+        var endDate = LocalDateTime.now().plusMonths(1);
+
+        when(playerSnapshotRepository.findByNameContaining(idOrName))
+            .thenReturn(List.of());
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+            .isThrownBy(() -> dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate))
+            .withMessageContaining("No player found with the name");
+    }
+
+    @Test
+    void getPlayerActivity_multiplePlayersWithNameFound() {
+        var idOrName = "testPlayer";
+        var startDate = LocalDateTime.now();
+        var endDate = LocalDateTime.now().plusMonths(1);
+
+        when(playerSnapshotRepository.findByNameContaining(idOrName))
+            .thenReturn(List.of(TestEntities.playerSnapshotJpa(1), TestEntities.playerSnapshotJpa(2)));
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+            .isThrownBy(() -> dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate))
+            .withMessageContaining("Multiple players found with the name");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void getPlayerActivity_noActivityWithinPeriod() {
+        var idOrName = "123";
+        var startDate = LocalDateTime.now();
+        var endDate = LocalDateTime.now().plusMonths(1);
+
+        when(playerActivityRepository.findBy(any(Specification.class), any()))
+            .thenReturn(List.of());
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+            .isThrownBy(() -> dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate))
+            .withMessageContaining("No activity data found for player");
+    }
+
+    private List<PlayerActivityJpa> createPlayerActivityList(MemberJpa member) {
+        List<PlayerActivityJpa> activityJpas = new ArrayList<>();
         activityJpas.add(
-            MemberActivityJpa.create(
-                member.getId(),
+            PlayerActivityJpa.create(
+                member.getPlayerJpa(),
                 LocalDateTime.now().minusMonths(1),
-                member.getName(),
-                member.getRank(),
-                member.getClanJpa().getId(),
-                member.getJoinedClan(),
                 LocalDateTime.now(),
-                1L + member.getId(),
-                1L + member.getId(),
-                1L + member.getId(),
-                1L + member.getId()
+                1L + member.getPlayerJpa().getId(),
+                1L + member.getPlayerJpa().getId(),
+                1L + member.getPlayerJpa().getId(),
+                1L + member.getPlayerJpa().getId()
             )
         );
         activityJpas.add(
-            MemberActivityJpa.create(
-                member.getId(),
+            PlayerActivityJpa.create(
+                member.getPlayerJpa(),
                 LocalDateTime.now().minusWeeks(1),
-                member.getName(),
-                member.getRank(),
-                member.getClanJpa().getId(),
-                member.getJoinedClan(),
                 LocalDateTime.now(),
-                5L + member.getId(),
-                10L + member.getId(),
-                15L + member.getId(),
-                20L + member.getId()
+                5L + member.getPlayerJpa().getId(),
+                10L + member.getPlayerJpa().getId(),
+                15L + member.getPlayerJpa().getId(),
+                20L + member.getPlayerJpa().getId()
             )
         );
         activityJpas.add(
-            MemberActivityJpa.create(
-                member.getId(),
+            PlayerActivityJpa.create(
+                member.getPlayerJpa(),
                 LocalDateTime.now(),
-                member.getName(),
-                member.getRank(),
-                member.getClanJpa().getId(),
-                member.getJoinedClan(),
                 LocalDateTime.now(),
-                10L + member.getId(),
-                20L + member.getId(),
-                30L + member.getId(),
-                40L + member.getId()
+                10L + member.getPlayerJpa().getId(),
+                20L + member.getPlayerJpa().getId(),
+                30L + member.getPlayerJpa().getId(),
+                40L + member.getPlayerJpa().getId()
             )
         );
         return activityJpas;
     }
 
-    private void assertMemberActivity(MemberActivity memberActivity) {
+    private List<PlayerSnapshotJpa> createPlayerSnapshotList(PlayerJpa playerJpa) {
+        List<PlayerSnapshotJpa> playerSnapshotJpas = new ArrayList<>();
+        playerSnapshotJpas.add(
+            PlayerSnapshotJpa.create(
+                playerJpa,
+                LocalDateTime.now().minusMonths(1),
+                TestEntities.clanJpa(1),
+                "Bob",
+                Rank.COMBAT_OFFICER,
+                LocalDateTime.now().minusMonths(2)
+            )
+        );
+        playerSnapshotJpas.add(
+            PlayerSnapshotJpa.create(
+                playerJpa,
+                LocalDateTime.now().minusWeeks(1),
+                TestEntities.clanJpa(1),
+                "Bob1345",
+                Rank.PERSONNEL_OFFICER,
+                LocalDateTime.now().minusMonths(2)
+            )
+        );
+        playerSnapshotJpas.add(
+            PlayerSnapshotJpa.create(
+                playerJpa,
+                LocalDateTime.now(),
+                TestEntities.clanJpa(1),
+                "Bob123",
+                Rank.PRIVATE,
+                LocalDateTime.now().minusMonths(2)
+            )
+        );
+        return playerSnapshotJpas;
+    }
+
+    private void assertPlayerActivity(MemberActivity memberActivity) {
         assertThat(memberActivity.randomsDiff()).isEqualTo(9);
         assertThat(memberActivity.skirmishDiff()).isEqualTo(19);
         assertThat(memberActivity.advancesDiff()).isEqualTo(29);
         assertThat(memberActivity.clanWarDiff()).isEqualTo(39);
+    }
+
+    private void assertPlayerActivity(PlayerInfo playerInfo) {
+        assertThat(playerInfo.randomsDiff()).isEqualTo(9);
+        assertThat(playerInfo.skirmishDiff()).isEqualTo(19);
+        assertThat(playerInfo.advancesDiff()).isEqualTo(29);
+        assertThat(playerInfo.clanWarDiff()).isEqualTo(39);
     }
 }

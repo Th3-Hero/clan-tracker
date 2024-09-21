@@ -17,5 +17,5 @@ public record PlayerInfo(
     @Schema(description = "How many random battles the member has played within the time period.") @NonNull Long randomsDiff,
     @Schema(description = "How many skirmish battles the member has played within the time period.") @NonNull Long skirmishDiff,
     @Schema(description = "How many advances the member has played within the time period.") @NonNull Long advancesDiff,
-    @Schema(description = "How many clan wars battles the member has played within the time period.") @NonNull Long clanWarDif
+    @Schema(description = "How many clan wars battles the member has played within the time period.") @NonNull Long clanWarDiff
 ) { }

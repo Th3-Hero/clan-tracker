@@ -15,6 +15,7 @@ import com.th3hero.clantracker.jpa.clan.ClanRepository;
 import com.th3hero.clantracker.jpa.member.MemberJpa;
 import com.th3hero.clantracker.jpa.member.MemberRepository;
 import com.th3hero.clantracker.jpa.player.PlayerJpa;
+import com.th3hero.clantracker.jpa.player.PlayerRepository;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
 import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotJpa;
@@ -49,6 +50,7 @@ public class ClanTrackerService {
     private final SchedulingService schedulingService;
     private final ClanRepository clanRepository;
     private final MemberRepository memberRepository;
+    private final PlayerRepository playerRepository;
     private final PlayerActivityRepository playerActivityRepository;
     private final PlayerSnapshotRepository playerSnapshotRepository;
 
@@ -184,21 +186,38 @@ public class ClanTrackerService {
         }
     }
 
-    private static List<MemberJpa> createMembers(EnrichedClan clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
+    private List<MemberJpa> createMembers(EnrichedClan clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
+        List<PlayerJpa> playerJpas = clanDetails.members().stream()
+            .filter(basicPlayer -> enrichedPlayerMap.containsKey(basicPlayer.id()))
+            .map(basicPlayer -> {
+                EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
+                return PlayerJpa.create(enrichedPlayer.accountId(), enrichedPlayer.nickname());
+            })
+            .toList();
+
+        // Players needs to be saved before members as they are a PK in the MemberJpa entity.
+        // This could be done with less code but this way we can batch save the players rather than making up to 100 saves.
+        List<PlayerJpa> savedPlayers = playerRepository.saveAll(playerJpas);
+
+        Map<Long, PlayerJpa> savedPlayerJpaMap = savedPlayers.stream()
+            .collect(Collectors.toMap(PlayerJpa::getId, Function.identity()));
+
         return clanDetails.members().stream()
             .filter(basicPlayer -> enrichedPlayerMap.containsKey(basicPlayer.id()))
             .map(basicPlayer -> {
-                // merge the player info from the basic and enriched player info and create a MemberJpa object from it.
                 EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(basicPlayer.id());
                 Rank rank = EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role());
                 if (rank == null) {
                     throw new InvalidWargamingResponseException("Unknown rank %s".formatted(basicPlayer.role()));
                 }
+                PlayerJpa playerJpa = savedPlayerJpaMap.get(enrichedPlayer.accountId());
+
                 return MemberJpa.create(
-                    PlayerJpa.create(enrichedPlayer.accountId(), enrichedPlayer.nickname()),
+                    playerJpa,
                     clan,
                     rank,
-                    DateUtils.fromTimestamp(basicPlayer.joinedAt())
+                    DateUtils.fromTimestamp(basicPlayer.joinedAt()),
+                    DateUtils.fromTimestamp(enrichedPlayer.updatedAt())
                 );
             })
             .toList();

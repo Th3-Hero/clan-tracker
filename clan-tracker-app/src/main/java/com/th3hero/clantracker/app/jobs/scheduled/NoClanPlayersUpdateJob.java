@@ -25,6 +25,11 @@ public class NoClanPlayersUpdateJob {
     @Scheduled(cron = "0 0 * * *")
     public void updateNoClanPlayers() {
         List<PlayerJpa> clanlessPlayers = playerRepository.findPlayersWithoutClan();
+        if (clanlessPlayers.isEmpty()) {
+            log.debug("No players without a clan");
+            return;
+        }
+
         log.debug("{} players without a clan", clanlessPlayers.size());
         List<Long> playerIds = clanlessPlayers.stream()
             .map(PlayerJpa::getId)
