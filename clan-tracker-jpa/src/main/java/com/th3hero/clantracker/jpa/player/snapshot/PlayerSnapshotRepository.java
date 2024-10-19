@@ -10,6 +10,6 @@ import java.util.List;
 @Repository
 public interface PlayerSnapshotRepository extends JpaRepository<PlayerSnapshotJpa, PlayerSnapshotKey> {
 
-    @Query("select p from PlayerSnapshotJpa p where p.name like %:name%")
+    @Query("select p from PlayerSnapshotJpa p where lower(p.name) like lower(concat('%', :name, '%'))")
     List<PlayerSnapshotJpa> findByNameContaining(@Param("name") String name);
 }

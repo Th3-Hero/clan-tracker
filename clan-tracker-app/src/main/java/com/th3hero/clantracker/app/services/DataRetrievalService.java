@@ -8,6 +8,7 @@ import com.th3hero.clantracker.jpa.clan.ClanRepository;
 import com.th3hero.clantracker.jpa.config.ConfigJpa;
 import com.th3hero.clantracker.jpa.member.MemberJpa;
 import com.th3hero.clantracker.jpa.player.PlayerJpa;
+import com.th3hero.clantracker.jpa.player.PlayerRepository;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
 import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotJpa;
@@ -25,6 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +37,7 @@ public class DataRetrievalService {
     private final ClanRepository clanRepository;
     private final PlayerActivityRepository playerActivityRepository;
     private final PlayerSnapshotRepository playerSnapshotRepository;
+    private final PlayerRepository playerRepository;
 
     /**
      * Get the default config values for the app. Configurations are dynamic and thus need to be retrieved.
@@ -96,32 +99,38 @@ public class DataRetrievalService {
 
     }
 
-    public PlayerInfo getPlayerActivity(@NotNull String idOrName, @NonNull LocalDateTime startDate, @NonNull LocalDateTime endDate) {
+    public PlayerSearch getPlayerActivity(@NotNull String idOrName, @NonNull LocalDateTime startDate, @NonNull LocalDateTime endDate) {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date must be before end date");
         }
 
-        Long playerId;
+        List<PlayerJpa> players = new ArrayList<>();
         if (idOrName.matches("\\d+")) {
-            playerId = Long.parseLong(idOrName);
+            Long playerId = Long.parseLong(idOrName);
+            playerRepository.findById(playerId)
+                .ifPresent(players::add);
         } else {
-            List<PlayerJpa> players = searchPlayer(idOrName);
-            if (players.isEmpty()) {
-                throw new IllegalArgumentException("No player found with the name: %s".formatted(idOrName));
-            }
-            if (players.size() > 1) {
-                String names = players.stream().map(PlayerJpa::getName).collect(Collectors.joining("\n"));
-                throw new IllegalArgumentException("Multiple players found with the name: %s\nPlayers found:\n%s".formatted(idOrName, names));
-            }
-            playerId = players.getFirst().getId();
+            players = searchPlayer(idOrName);
         }
 
-        List<PlayerActivityJpa> playerActivityJpas = findPlayerActivityJpas(playerId, startDate, endDate);
-        if (playerActivityJpas.isEmpty()) {
-            throw new EntityNotFoundException("No activity data found for player %s between %s and %s".formatted(playerId, startDate, endDate));
+        if (players.isEmpty()) {
+            throw new EntityNotFoundException("No player found with the id or name: %s".formatted(idOrName));
         }
 
-        return ApiFactory.createPlayerInfo(playerId, playerActivityJpas, startDate, endDate);
+        List<PlayerInfo> playerInfos = new ArrayList<>();
+
+        for (PlayerJpa player : players) {
+            List<PlayerActivityJpa> playerActivityJpas = findPlayerActivityJpas(player.getId(), startDate, endDate);
+            if (!playerActivityJpas.isEmpty()) {
+                playerInfos.add(ApiFactory.createPlayerInfo(player.getId(), playerActivityJpas));
+            }
+        }
+
+        if (playerInfos.isEmpty()) {
+            throw new EntityNotFoundException("No player activity found within the specified time period");
+        }
+
+        return new PlayerSearch(startDate, endDate, playerInfos);
     }
 
     private List<MemberActivity> createMemberActivityList(LocalDateTime startDate, LocalDateTime endDate, ClanJpa clanJpa) {

@@ -36,7 +36,7 @@ public final class ApiFactory {
         );
     }
 
-    public static PlayerInfo createPlayerInfo(Long playerId, List<PlayerActivityJpa> playerActivityJpas, LocalDateTime startDate, LocalDateTime endDate) {
+    public static PlayerInfo createPlayerInfo(Long playerId, List<PlayerActivityJpa> playerActivityJpas) {
         Long randomsDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalRandomBattles);
         Long skirmishDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalSkirmishBattles);
         Long advancesDiff = getDiff(playerActivityJpas, PlayerActivityJpa::getTotalAdvancesBattles);
@@ -45,8 +45,6 @@ public final class ApiFactory {
         return new PlayerInfo(
             playerId,
             playerActivityJpas.getFirst().getPlayerJpa().getName(),
-            startDate,
-            endDate,
             randomsDiff,
             skirmishDiff,
             advancesDiff,

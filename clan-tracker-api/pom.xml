@@ -52,6 +52,7 @@
 						<class>com.th3hero.clantracker.api.ui.Config</class>
 						<class>com.th3hero.clantracker.api.ui.MemberActivity</class>
 						<class>com.th3hero.clantracker.api.ui.PlayerInfo</class>
+						<class>com.th3hero.clantracker.api.ui.PlayerSearch</class>
 						<class>com.th3hero.clantracker.api.ui.Rank</class>
 					</classes>
 					<outputKind>module</outputKind>

@@ -1,10 +1,7 @@
 package com.th3hero.clantracker.app.controllers;
 
-import com.th3hero.clantracker.api.ui.Config;
-import com.th3hero.clantracker.api.ui.PlayerInfo;
+import com.th3hero.clantracker.api.ui.*;
 import com.th3hero.clantracker.app.services.DataRetrievalService;
-import com.th3hero.clantracker.api.ui.ActivityInfo;
-import com.th3hero.clantracker.api.ui.Clan;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
@@ -48,8 +45,8 @@ public class DataRetrievalController {
     }
 
     @GetMapping("/player-activity/{idOrName}")
-    @Operation(summary = "Get activity data for a specific player.")
-    public PlayerInfo getPlayerActivityInfo(
+    @Operation(summary = "Get search result for a player's activity within the provided time period. If multiple players matching the partial name are found, all matches will be returned.")
+    public PlayerSearch getPlayerActivityInfo(
         @PathVariable @NotNull(message = "Player id must be provided.") String idOrName,
         @RequestParam LocalDateTime startDate,
         @RequestParam LocalDateTime endDate
