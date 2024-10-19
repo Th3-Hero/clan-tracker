@@ -34,7 +34,7 @@ class PlayerSnapshotRepositoryTest {
     private EntityManager entityManager;
 
     @Test
-    void findByNameContaining() {
+    void findByNameContaining_exact() {
         var clan = TestEntities.clanJpa(1);
         var playerOne = TestEntities.playerJpa(1);
         playerOne.setName("Bob");
@@ -51,6 +51,36 @@ class PlayerSnapshotRepositoryTest {
         entityManager.clear();
 
         var playerSnapshots = playerSnapshotRepository.findByNameContaining(playerTwo.getName().substring(0, 3));
+
+        assertThat(playerSnapshots).hasSize(1);
+        var retrievedSnapshot = playerSnapshots.getFirst();
+
+        assertThat(retrievedSnapshot).extracting(PlayerSnapshotJpa::getName)
+            .isEqualTo(playerTwo.getName());
+        assertThat(retrievedSnapshot).extracting(PlayerSnapshotJpa::getPlayerJpa)
+            .isEqualTo(playerTwo);
+        assertThat(retrievedSnapshot).extracting(PlayerSnapshotJpa::getClanJpa)
+            .isEqualTo(clan);
+    }
+
+    @Test
+    void findByNameContaining_missmatchCase() {
+        var clan = TestEntities.clanJpa(1);
+        var playerOne = TestEntities.playerJpa(1);
+        playerOne.setName("Bob");
+        var playerTwo = TestEntities.playerJpa(2);
+        playerTwo.setName("Alice");
+        clanRepository.saveAndFlush(clan);
+        playerOne = playerRepository.saveAndFlush(playerOne);
+        playerTwo = playerRepository.saveAndFlush(playerTwo);
+
+        var playerSnapshotOne = playerSnapshotJpa(1, playerOne, clan);
+        var playerSnapshotTwo = playerSnapshotJpa(2, playerTwo, clan);
+
+        playerSnapshotRepository.saveAllAndFlush(Arrays.asList(playerSnapshotOne, playerSnapshotTwo));
+        entityManager.clear();
+
+        var playerSnapshots = playerSnapshotRepository.findByNameContaining("aLiCE".substring(0, 3));
 
         assertThat(playerSnapshots).hasSize(1);
         var retrievedSnapshot = playerSnapshots.getFirst();

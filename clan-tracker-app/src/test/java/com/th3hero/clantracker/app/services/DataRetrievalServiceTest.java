@@ -7,6 +7,7 @@ import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
 import com.th3hero.clantracker.jpa.member.MemberJpa;
 import com.th3hero.clantracker.jpa.clan.ClanRepository;
 import com.th3hero.clantracker.jpa.player.PlayerJpa;
+import com.th3hero.clantracker.jpa.player.PlayerRepository;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
 import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotJpa;
@@ -36,6 +37,8 @@ class DataRetrievalServiceTest {
     private ConfigService configService;
     @Mock
     private ClanRepository clanRepository;
+    @Mock
+    private PlayerRepository playerRepository;
     @Mock
     private PlayerActivityRepository playerActivityRepository;
     @Mock
@@ -172,19 +175,23 @@ class DataRetrievalServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void getPlayerActivity_validId() {
-        var idOrName = "123";
         var startDate = LocalDateTime.now();
         var endDate = LocalDateTime.now().plusMonths(1);
-        var playerId = Long.parseLong(idOrName);
+        var player = TestEntities.playerJpa(1);
         var playerActivityList = createPlayerActivityList(TestEntities.memberJpa(1, TestEntities.clanJpa(1)));
 
+        when(playerRepository.findById(player.getId()))
+            .thenReturn(Optional.of(player));
         when(playerActivityRepository.findBy(any(Specification.class), any()))
             .thenReturn(playerActivityList);
 
-        var result = dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate);
+        var result = dataRetrievalService.getPlayerActivity(player.getId().toString(), startDate, endDate);
 
-        assertThat(result.id()).isEqualTo(playerId);
-        assertPlayerActivity(result);
+        assertThat(result.startDate()).isEqualTo(startDate);
+        assertThat(result.endDate()).isEqualTo(endDate);
+        assertThat(result.playerInfo()).hasSize(1);
+        assertThat(result.playerInfo().getFirst().id()).isEqualTo(player.getId());
+        assertPlayerActivity(result.playerInfo().getFirst());
     }
 
     @SuppressWarnings("unchecked")
@@ -204,8 +211,11 @@ class DataRetrievalServiceTest {
 
         var result = dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate);
 
-        assertThat(result.id()).isEqualTo(player.getId());
-        assertPlayerActivity(result);
+        assertThat(result.startDate()).isEqualTo(startDate);
+        assertThat(result.endDate()).isEqualTo(endDate);
+        assertThat(result.playerInfo()).hasSize(1);
+        assertThat(result.playerInfo().getFirst().id()).isEqualTo(player.getId());
+        assertPlayerActivity(result.playerInfo().getFirst());
     }
 
     @Test
@@ -227,38 +237,57 @@ class DataRetrievalServiceTest {
         when(playerSnapshotRepository.findByNameContaining(idOrName))
             .thenReturn(List.of());
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
+        assertThatExceptionOfType(EntityNotFoundException.class)
             .isThrownBy(() -> dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate))
-            .withMessageContaining("No player found with the name");
+            .withMessageContaining("No player found with the id or name: %s".formatted(idOrName));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    void getPlayerActivity_multiplePlayersWithNameFound() {
-        var idOrName = "testPlayer";
+    void getPlayerActivity_multipleMatchingPlayersFound() {
         var startDate = LocalDateTime.now();
         var endDate = LocalDateTime.now().plusMonths(1);
+        var playerNameSearch = "Test";
+        var playerOne = TestEntities.playerJpa(1);
+        var playerTwo = TestEntities.playerJpa(2);
+        var playerActivityListOne = createPlayerActivityList(TestEntities.memberJpa(1, TestEntities.clanJpa(1)));
+        var playerActivityListTwo = createPlayerActivityList(TestEntities.memberJpa(2, TestEntities.clanJpa(1)));
+        var playerSnapshotList = new ArrayList<PlayerSnapshotJpa>();
+        playerSnapshotList.addAll(createPlayerSnapshotList(playerOne));
+        playerSnapshotList.addAll(createPlayerSnapshotList(playerTwo));
 
-        when(playerSnapshotRepository.findByNameContaining(idOrName))
-            .thenReturn(List.of(TestEntities.playerSnapshotJpa(1), TestEntities.playerSnapshotJpa(2)));
+        when(playerSnapshotRepository.findByNameContaining(playerNameSearch))
+            .thenReturn(playerSnapshotList);
+        when(playerActivityRepository.findBy(any(Specification.class), any()))
+            .thenReturn(playerActivityListOne, playerActivityListTwo);
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-            .isThrownBy(() -> dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate))
-            .withMessageContaining("Multiple players found with the name");
+        var result = dataRetrievalService.getPlayerActivity(playerNameSearch, startDate, endDate);
+
+        assertThat(result.startDate()).isEqualTo(startDate);
+        assertThat(result.endDate()).isEqualTo(endDate);
+        assertThat(result.playerInfo()).hasSize(2);
+        assertThat(result.playerInfo()).extracting(PlayerInfo::id)
+            .containsExactlyInAnyOrder(playerOne.getId(), playerTwo.getId());
+        assertThat(result.playerInfo()).extracting(PlayerInfo::name)
+            .containsExactlyInAnyOrder(playerOne.getName(), playerTwo.getName());
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void getPlayerActivity_noActivityWithinPeriod() {
-        var idOrName = "123";
         var startDate = LocalDateTime.now();
         var endDate = LocalDateTime.now().plusMonths(1);
+        var player = TestEntities.playerJpa(1);
+        var playerId = player.getId().toString();
 
+        when(playerRepository.findById(player.getId()))
+            .thenReturn(Optional.of(player));
         when(playerActivityRepository.findBy(any(Specification.class), any()))
             .thenReturn(List.of());
 
         assertThatExceptionOfType(EntityNotFoundException.class)
-            .isThrownBy(() -> dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate))
-            .withMessageContaining("No activity data found for player");
+            .isThrownBy(() -> dataRetrievalService.getPlayerActivity(playerId, startDate, endDate))
+            .withMessageContaining("No player activity found within the specified time period");
     }
 
     private List<PlayerActivityJpa> createPlayerActivityList(MemberJpa member) {

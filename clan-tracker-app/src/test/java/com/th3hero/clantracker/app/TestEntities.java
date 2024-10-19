@@ -65,6 +65,18 @@ public class TestEntities {
         return member;
     }
 
+    public static MemberJpa memberJpa(PlayerJpa playerJpa, int seed, ClanJpa clanJpa) {
+        var member = MemberJpa.builder()
+            .playerJpa(playerJpa)
+            .clanJpa(clanJpa)
+            .rank(Rank.COMBAT_OFFICER)
+            .joinedClan(LocalDateTime.now().minusMonths(seed+2))
+            .lastUpdated(LocalDateTime.now().minusDays(seed))
+            .build();
+        clanJpa.getMembers().add(member);
+        return member;
+    }
+
     public static PlayerActivityJpa playerActivityJpa(int seed) {
         var player = playerJpa(seed);
         return PlayerActivityJpa.builder()

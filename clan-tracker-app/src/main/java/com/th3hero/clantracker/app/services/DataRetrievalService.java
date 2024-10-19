@@ -35,9 +35,9 @@ import java.util.stream.Collectors;
 public class DataRetrievalService {
     private final ConfigService configService;
     private final ClanRepository clanRepository;
+    private final PlayerRepository playerRepository;
     private final PlayerActivityRepository playerActivityRepository;
     private final PlayerSnapshotRepository playerSnapshotRepository;
-    private final PlayerRepository playerRepository;
 
     /**
      * Get the default config values for the app. Configurations are dynamic and thus need to be retrieved.
