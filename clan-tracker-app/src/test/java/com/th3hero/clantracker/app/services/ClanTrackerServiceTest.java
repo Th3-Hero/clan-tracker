@@ -9,9 +9,11 @@ import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan.BasicPlayer;
 import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer.Battle;
+import com.th3hero.clantracker.jpa.clan.ClanJpa;
 import com.th3hero.clantracker.jpa.clan.ClanRepository;
 import com.th3hero.clantracker.jpa.member.MemberJpa;
 import com.th3hero.clantracker.jpa.member.MemberRepository;
+import com.th3hero.clantracker.jpa.player.PlayerJpa;
 import com.th3hero.clantracker.jpa.player.PlayerRepository;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
@@ -25,6 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -180,6 +183,37 @@ class ClanTrackerServiceTest {
         verify(clanRepository, times(2)).save(any());
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void fetchMemberDetails_membersLeft() {
+        final var clanTag = "CLAN";
+        final var clanId = 1234L;
+        final var enrichedClan = getEnrichedClanMissingPlayer(clanId, clanTag);
+        final var enrichedPlayers = getEnrichedPlayersMissingPlayer();
+        final var clanJpa = getClanJpaMissingPlayer();
+        final var removedMember = clanJpa.getMembers().get(1);
+
+        when(apiService.clanDetails(clanId))
+            .thenReturn(Optional.of(enrichedClan));
+        when(apiService.memberDetails(List.of(1L, 3L)))
+            .thenReturn(enrichedPlayers);
+        when(clanRepository.findById(clanId))
+            .thenReturn(Optional.of(clanJpa));
+        when(playerRepository.saveAll(any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.saveAll(any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+        when(clanRepository.save(any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        clanTrackerService.fetchMemberDetails(clanId);
+
+        verify(playerSnapshotRepository).saveAll(any());
+        verify(clanRepository, times(3)).save(any());
+        verify(memberRepository).deleteAll(List.of(removedMember));
+
+    }
+
     @Test
     void fetchClanMembers_failedClanDetails() {
         final var clanId = 1234L;
@@ -245,5 +279,58 @@ class ClanTrackerServiceTest {
             new EnrichedPlayer(2L, 1234L, 54321L, "BOB", stats),
             new EnrichedPlayer(3L, 1234L, 54321L, "ALICE", stats)
         );
+    }
+
+    private static EnrichedClan getEnrichedClanMissingPlayer(long clanId, String clanTag) {
+        final var basicPlayers = List.of(
+            new BasicPlayer(1L, 1234L, "commander"),
+            new BasicPlayer(3L, 54325L, "recruit")
+        );
+        return new EnrichedClan(clanId, clanTag, basicPlayers);
+    }
+
+    private static List<EnrichedPlayer> getEnrichedPlayersMissingPlayer() {
+        final var stats = Map.of(
+            "random", new Battle(56L),
+            "stronghold_skirmish", new Battle(78L),
+            "stronghold_defense", new Battle(90L),
+            "globalmap_absolute", new Battle(12L),
+            "globalmap_middle", new Battle(34L),
+            "globalmap_champion", new Battle(56L)
+        );
+        return List.of(
+            new EnrichedPlayer(1L, 1234L, 54321L, "FRED", stats),
+            new EnrichedPlayer(3L, 1234L, 54321L, "ALICE", stats)
+        );
+    }
+
+    private static ClanJpa getClanJpaMissingPlayer() {
+        final var clan = ClanJpa.create(1234L, "CLAN");
+
+        final var memberOne = MemberJpa.create(
+            PlayerJpa.create(1L, "FRED"),
+            clan,
+            Rank.COMMANDER,
+            LocalDateTime.now(),
+            LocalDateTime.now()
+        );
+        final var memberTwo = MemberJpa.create(
+            PlayerJpa.create(2L, "BOB"),
+            clan,
+            Rank.EXECUTIVE_OFFICER,
+            LocalDateTime.now(),
+            LocalDateTime.now()
+        );
+        final var memberThree = MemberJpa.create(
+            PlayerJpa.create(3L, "ALICE"),
+            clan,
+            Rank.RECRUIT,
+            LocalDateTime.now(),
+            LocalDateTime.now()
+        );
+        final var members = new ArrayList<MemberJpa>(List.of(memberOne, memberTwo, memberThree));
+        clan.getMembers().clear();
+        clan.getMembers().addAll(members);
+        return clan;
     }
 }

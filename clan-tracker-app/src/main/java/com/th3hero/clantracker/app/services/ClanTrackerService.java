@@ -103,24 +103,38 @@ public class ClanTrackerService {
         Map<Long, BasicPlayer> basicPlayerMap = clanDetails.members().stream()
             .collect(Collectors.toMap(BasicPlayer::id, Function.identity()));
 
-        ClanJpa clan = clanRepository.save(
-            ClanJpa.create(
-                clanDetails.clanId(),
-                clanDetails.tag()
-            )
-        );
+        ClanJpa clan = clanRepository.findById(clanId)
+            .orElse(
+                clanRepository.save(
+                    ClanJpa.create(clanDetails.clanId(), clanDetails.tag())
+                )
+            );
 
+        // Create and save all the members
         List<MemberJpa> memberJpas = createMembers(clanDetails, enrichedPlayerMap, clan);
         memberJpas = memberRepository.saveAll(memberJpas);
 
+        // Create and save all the player activity of the members
         List<PlayerActivityJpa> playerActivityJpas = createPlayerActivityJpas(memberJpas, enrichedPlayerMap);
         playerActivityRepository.saveAll(playerActivityJpas);
 
+        // Create and save all the player snapshots of the members
         List<PlayerSnapshotJpa> playerSnapshotJpas = createPlayerSnapshotJpas(clan, memberJpas, basicPlayerMap, enrichedPlayerMap);
         playerSnapshotRepository.saveAll(playerSnapshotJpas);
 
         clan.getMembers().addAll(memberJpas);
-        clanRepository.save(clan);
+        clan = clanRepository.save(clan);
+
+        // Remove any members that are no longer in the clan
+        List<MemberJpa> membersNoLongInClan = clan.getMembers().stream()
+            .filter(member -> !memberIds.contains(member.getPlayerJpa().getId()))
+            .toList();
+        if (!membersNoLongInClan.isEmpty()) {
+            clan.getMembers().removeAll(membersNoLongInClan);
+            memberRepository.deleteAll(membersNoLongInClan);
+            clanRepository.save(clan);
+            log.debug("Removed {} members that are no longer in the clan {}", membersNoLongInClan.size(), clanId);
+        }
     }
 
     public void importExistingClanActivity(MultipartFile file, Long clanId) {
