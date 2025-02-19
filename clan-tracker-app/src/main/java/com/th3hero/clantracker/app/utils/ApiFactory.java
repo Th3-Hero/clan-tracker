@@ -54,7 +54,7 @@ public final class ApiFactory {
 
     private static LocalDateTime getLastBattle(List<PlayerActivityJpa> memberActivityJpas) {
         return memberActivityJpas.stream()
-            .map(PlayerActivityJpa::getFetchedAt)
+            .map(PlayerActivityJpa::getLastBattle)
             .max(LocalDateTime::compareTo)
             .orElse(LocalDateTime.now());
     }
