@@ -82,8 +82,8 @@ public class DataRetrievalService {
 
         // if either or both dates are null, use the default range
         if (startDate == null || endDate == null) {
-            endDate = LocalDate.now().atStartOfDay();
-            startDate = endDate.minusDays(configJpa.getDefaultActivitySummaryDateRange());
+            endDate = LocalDateTime.now();
+            startDate = LocalDate.now().atStartOfDay().minusDays(configJpa.getDefaultActivitySummaryDateRange());
         } else if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date must be before end date");
         }
