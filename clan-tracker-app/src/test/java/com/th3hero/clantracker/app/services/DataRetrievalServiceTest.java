@@ -1,18 +1,18 @@
 package com.th3hero.clantracker.app.services;
 
+import com.th3hero.clantracker.api.ui.MemberActivity;
 import com.th3hero.clantracker.api.ui.PlayerInfo;
 import com.th3hero.clantracker.api.ui.Rank;
 import com.th3hero.clantracker.app.TestEntities;
 import com.th3hero.clantracker.app.exceptions.ClanNotFoundException;
-import com.th3hero.clantracker.jpa.member.MemberJpa;
 import com.th3hero.clantracker.jpa.clan.ClanRepository;
+import com.th3hero.clantracker.jpa.member.MemberJpa;
 import com.th3hero.clantracker.jpa.player.PlayerJpa;
 import com.th3hero.clantracker.jpa.player.PlayerRepository;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityJpa;
 import com.th3hero.clantracker.jpa.player.activity.PlayerActivityRepository;
 import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotJpa;
 import com.th3hero.clantracker.jpa.player.snapshot.PlayerSnapshotRepository;
-import com.th3hero.clantracker.api.ui.MemberActivity;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

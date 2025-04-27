@@ -3,8 +3,6 @@ package com.th3hero.clantracker.api.ui;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.NonNull;
 
-import java.time.LocalDateTime;
-
 @Schema(
     name = "PlayerInfo",
     description = "Information about the activity of player during a specific period."

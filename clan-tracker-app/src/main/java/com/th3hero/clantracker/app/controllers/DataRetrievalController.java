@@ -1,6 +1,9 @@
 package com.th3hero.clantracker.app.controllers;
 
-import com.th3hero.clantracker.api.ui.*;
+import com.th3hero.clantracker.api.ui.ActivityInfo;
+import com.th3hero.clantracker.api.ui.Clan;
+import com.th3hero.clantracker.api.ui.Config;
+import com.th3hero.clantracker.api.ui.PlayerSearch;
 import com.th3hero.clantracker.app.services.DataRetrievalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +14,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j

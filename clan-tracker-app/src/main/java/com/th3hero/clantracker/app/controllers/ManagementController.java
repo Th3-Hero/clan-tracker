@@ -4,14 +4,12 @@ import com.th3hero.clantracker.app.services.ClanTrackerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Validated
@@ -42,14 +40,4 @@ public class ManagementController {
     ) {
         clanTrackerService.removeClanFromTracking(clanTag);
     }
-
-//    @PostMapping(value = "/import", consumes = "multipart/form-data")
-//    @Operation(summary = "Import existing activity data csv file")
-//    @ResponseStatus(HttpStatus.CREATED)
-//    public void importExistingActivityData(
-//        @NotNull(message = "Clan id must be provided.") Long clanId,
-//        @NotNull(message = "CSV file for importing must be provided.") @RequestParam("file") MultipartFile file
-//    ) {
-//        clanTrackerService.importExistingClanActivity(file, clanId);
-//    }
 }
