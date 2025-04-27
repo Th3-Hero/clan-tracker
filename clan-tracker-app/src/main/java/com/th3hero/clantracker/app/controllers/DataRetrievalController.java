@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,8 +39,8 @@ public class DataRetrievalController {
     @Operation(summary = "Get activity data for a specific clan. If no date range is provided, the default range will be used.")
     public ActivityInfo getClanActivityInfo(
         @PathVariable @NotNull(message = "Clan id must be provided.") Long clanId,
-        @RequestParam(required = false) LocalDateTime startDate,
-        @RequestParam(required = false) LocalDateTime endDate
+        @RequestParam(required = false) LocalDate startDate,
+        @RequestParam(required = false) LocalDate endDate
     ) {
         return dataRetrievalService.getClanActivityData(clanId, startDate, endDate);
     }
@@ -48,8 +49,8 @@ public class DataRetrievalController {
     @Operation(summary = "Get search result for a player's activity within the provided time period. If multiple players matching the partial name are found, all matches will be returned.")
     public PlayerSearch getPlayerActivityInfo(
         @PathVariable @NotNull(message = "Player id must be provided.") String idOrName,
-        @RequestParam LocalDateTime startDate,
-        @RequestParam LocalDateTime endDate
+        @RequestParam LocalDate startDate,
+        @RequestParam LocalDate endDate
     ) {
         return dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate);
     }

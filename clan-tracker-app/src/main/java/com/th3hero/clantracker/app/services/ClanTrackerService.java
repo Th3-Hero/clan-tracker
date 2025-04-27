@@ -33,7 +33,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,12 +83,16 @@ public class ClanTrackerService {
         clanRepository.delete(clan.get());
     }
 
+    public void fetchMemberDetails(Long clanId) {
+        fetchMemberDetails(clanId, LocalDate.now(), LocalTime.of(LocalTime.now().getHour(), 0));
+    }
+
     /**
      * Fetch clan members data for a specific clan.
      *
      * @param clanId the id of the clan to fetch members for.
      */
-    public void fetchMemberDetails(Long clanId) {
+    public void fetchMemberDetails(Long clanId, LocalDate effectiveDate, LocalTime effectiveTime) {
         // get clan info and basic member info
         EnrichedClan clanDetails = enrichedClanValidator(clanId, apiService.clanDetails(clanId));
         List<Long> memberIds = clanDetails.members().stream()
@@ -115,11 +121,11 @@ public class ClanTrackerService {
         memberJpas = memberRepository.saveAll(memberJpas);
 
         // Create and save all the player activity of the members
-        List<PlayerActivityJpa> playerActivityJpas = createPlayerActivityJpas(memberJpas, enrichedPlayerMap);
+        List<PlayerActivityJpa> playerActivityJpas = createPlayerActivityJpas(effectiveDate, effectiveTime, memberJpas, enrichedPlayerMap);
         playerActivityRepository.saveAll(playerActivityJpas);
 
         // Create and save all the player snapshots of the members
-        List<PlayerSnapshotJpa> playerSnapshotJpas = createPlayerSnapshotJpas(clan, memberJpas, basicPlayerMap, enrichedPlayerMap);
+        List<PlayerSnapshotJpa> playerSnapshotJpas = createPlayerSnapshotJpas(effectiveDate, effectiveTime, clan, memberJpas, basicPlayerMap, enrichedPlayerMap);
         playerSnapshotRepository.saveAll(playerSnapshotJpas);
 
         clan.getMembers().addAll(memberJpas);
@@ -137,68 +143,68 @@ public class ClanTrackerService {
         }
     }
 
-    public void importExistingClanActivity(MultipartFile file, Long clanId) {
-        ClanJpa clanJpa = clanRepository.findById(clanId)
-            .orElseThrow(() -> new ClanNotFoundException("Failed to find tracked clan with id %s. In order to import data make sure the clan is being tracked and the provided id is correct.".formatted(clanId)));
-
-        try {
-            InputStream inputStream = file.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-            String line;
-            List<PlayerActivityJpa> playerActivityData = new ArrayList<>();
-            List<PlayerSnapshotJpa> playerSnapshotData = new ArrayList<>();
-            while ((line = reader.readLine()) != null) {
-                List<String> data = List.of(line.split(","));
-                // dateTime, playerId, playerName, rank, joinedClanDate, lastBattleDateTime, randoms, skirmishes, advances, cwTotal
-                if (data.size() != 10) {
-                    log.error("Invalid data: {}", data);
-                    return;
-                }
-                LocalDateTime updatedAt = DateUtils.fromDateTime(data.getFirst());
-                Long playerId = Long.parseLong(data.get(1));
-                String playerName = data.get(2);
-                Rank rank = EnumUtils.getEnumIgnoreCase(Rank.class, Utils.importRankTransform(data.get(3)));
-                LocalDateTime joinedClan = DateUtils.fromDateString(data.get(4));
-                LocalDateTime lastBattle = DateUtils.fromDateTime(data.get(5));
-                long randoms = 0L;
-                if (!data.get(6).isBlank()) {
-                    randoms = Long.parseLong(data.get(6));
-                }
-                Long skirmishes = Long.parseLong(data.get(7));
-                Long advances = Long.parseLong(data.get(8));
-                Long cwTotal = Long.parseLong(data.get(9));
-
-                PlayerJpa playerJpa = PlayerJpa.create(playerId, playerName);
-
-                PlayerActivityJpa playerActivityJpa = PlayerActivityJpa.create(
-                    playerJpa,
-                    updatedAt,
-                    lastBattle,
-                    randoms,
-                    skirmishes,
-                    advances,
-                    cwTotal
-                );
-                playerActivityData.add(playerActivityJpa);
-
-                PlayerSnapshotJpa playerSnapshotJpa = PlayerSnapshotJpa.create(
-                    playerJpa,
-                    updatedAt,
-                    clanJpa,
-                    playerName,
-                    rank,
-                    joinedClan
-                );
-                playerSnapshotData.add(playerSnapshotJpa);
-            }
-
-            playerActivityRepository.saveAll(playerActivityData);
-            playerSnapshotRepository.saveAll(playerSnapshotData);
-        } catch (IOException e) {
-            log.error("Failed to read file", e);
-        }
-    }
+//    public void importExistingClanActivity(MultipartFile file, Long clanId) {
+//        ClanJpa clanJpa = clanRepository.findById(clanId)
+//            .orElseThrow(() -> new ClanNotFoundException("Failed to find tracked clan with id %s. In order to import data make sure the clan is being tracked and the provided id is correct.".formatted(clanId)));
+//
+//        try {
+//            InputStream inputStream = file.getInputStream();
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+//
+//            String line;
+//            List<PlayerActivityJpa> playerActivityData = new ArrayList<>();
+//            List<PlayerSnapshotJpa> playerSnapshotData = new ArrayList<>();
+//            while ((line = reader.readLine()) != null) {
+//                List<String> data = List.of(line.split(","));
+//                // dateTime, playerId, playerName, rank, joinedClanDate, lastBattleDateTime, randoms, skirmishes, advances, cwTotal
+//                if (data.size() != 10) {
+//                    log.error("Invalid data: {}", data);
+//                    return;
+//                }
+//                LocalDateTime updatedAt = DateUtils.fromDateTime(data.getFirst());
+//                Long playerId = Long.parseLong(data.get(1));
+//                String playerName = data.get(2);
+//                Rank rank = EnumUtils.getEnumIgnoreCase(Rank.class, Utils.importRankTransform(data.get(3)));
+//                LocalDateTime joinedClan = DateUtils.fromDateString(data.get(4));
+//                LocalDateTime lastBattle = DateUtils.fromDateTime(data.get(5));
+//                long randoms = 0L;
+//                if (!data.get(6).isBlank()) {
+//                    randoms = Long.parseLong(data.get(6));
+//                }
+//                Long skirmishes = Long.parseLong(data.get(7));
+//                Long advances = Long.parseLong(data.get(8));
+//                Long cwTotal = Long.parseLong(data.get(9));
+//
+//                PlayerJpa playerJpa = PlayerJpa.create(playerId, playerName);
+//
+//                PlayerActivityJpa playerActivityJpa = PlayerActivityJpa.create(
+//                    playerJpa,
+//                    updatedAt,
+//                    lastBattle,
+//                    randoms,
+//                    skirmishes,
+//                    advances,
+//                    cwTotal
+//                );
+//                playerActivityData.add(playerActivityJpa);
+//
+//                PlayerSnapshotJpa playerSnapshotJpa = PlayerSnapshotJpa.create(
+//                    playerJpa,
+//                    updatedAt,
+//                    clanJpa,
+//                    playerName,
+//                    rank,
+//                    joinedClan
+//                );
+//                playerSnapshotData.add(playerSnapshotJpa);
+//            }
+//
+//            playerActivityRepository.saveAll(playerActivityData);
+//            playerSnapshotRepository.saveAll(playerSnapshotData);
+//        } catch (IOException e) {
+//            log.error("Failed to read file", e);
+//        }
+//    }
 
     private List<MemberJpa> createMembers(EnrichedClan clanDetails, Map<Long, EnrichedPlayer> enrichedPlayerMap, ClanJpa clan) {
         List<PlayerJpa> playerJpas = clanDetails.members().stream()
@@ -237,17 +243,17 @@ public class ClanTrackerService {
             .toList();
     }
 
-    private static List<PlayerActivityJpa> createPlayerActivityJpas(List<MemberJpa> members, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
+    private static List<PlayerActivityJpa> createPlayerActivityJpas(LocalDate effectiveDate, LocalTime effectiveTime, List<MemberJpa> members, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
         final LocalDateTime fetchDateTime = LocalDateTime.now();
         return members.stream()
-            .map(member -> EntityFactory.createPlayerActivityJpa(member, enrichedPlayerMap, fetchDateTime))
+            .map(member -> EntityFactory.createPlayerActivityJpa(member, enrichedPlayerMap, fetchDateTime, effectiveDate, effectiveTime))
             .toList();
     }
 
-    private static List<PlayerSnapshotJpa> createPlayerSnapshotJpas(ClanJpa clanJpa, List<MemberJpa> members, Map<Long, BasicPlayer> basicPlayerMap, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
+    private static List<PlayerSnapshotJpa> createPlayerSnapshotJpas(LocalDate effectiveDate, LocalTime effectiveTime, ClanJpa clanJpa, List<MemberJpa> members, Map<Long, BasicPlayer> basicPlayerMap, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
         final LocalDateTime fetchDateTime = LocalDateTime.now();
         return members.stream()
-            .map(member -> EntityFactory.createPlayerSnapshotJpa(clanJpa, member, basicPlayerMap, enrichedPlayerMap, fetchDateTime))
+            .map(member -> EntityFactory.createPlayerSnapshotJpa(clanJpa, member, basicPlayerMap, enrichedPlayerMap, fetchDateTime, effectiveDate, effectiveTime))
             .toList();
     }
 

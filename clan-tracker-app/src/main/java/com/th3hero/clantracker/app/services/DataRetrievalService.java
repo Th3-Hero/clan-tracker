@@ -23,11 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
 
 @Service
 @Transactional
@@ -75,15 +73,15 @@ public class DataRetrievalService {
      * @Throws ClanNotFoundException if the clan with the specified id is not found.
      * @Throws IllegalArgumentException if the start date is after the end date.
      */
-    public ActivityInfo getClanActivityData(@NonNull Long clanId, LocalDateTime startDate, LocalDateTime endDate) {
+    public ActivityInfo getClanActivityData(@NonNull Long clanId, LocalDate startDate, LocalDate endDate) {
         ConfigJpa configJpa = configService.getConfigJpa();
         ClanJpa clanJpa = clanRepository.findById(clanId)
             .orElseThrow(() -> new ClanNotFoundException("Failed to find clan with id: %s".formatted(clanId)));
 
         // if either or both dates are null, use the default range
         if (startDate == null || endDate == null) {
-            endDate = LocalDateTime.now();
-            startDate = LocalDate.now().atStartOfDay().minusDays(configJpa.getDefaultActivitySummaryDateRange());
+            endDate = LocalDate.now();
+            startDate = LocalDate.now().minusDays(configJpa.getDefaultActivitySummaryDateRange());
         } else if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date must be before end date");
         }
@@ -99,7 +97,7 @@ public class DataRetrievalService {
 
     }
 
-    public PlayerSearch getPlayerActivity(@NotNull String idOrName, @NonNull LocalDateTime startDate, @NonNull LocalDateTime endDate) {
+    public PlayerSearch getPlayerActivity(@NotNull String idOrName, @NonNull LocalDate startDate, @NonNull LocalDate endDate) {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date must be before end date");
         }
@@ -133,7 +131,7 @@ public class DataRetrievalService {
         return new PlayerSearch(startDate, endDate, playerInfos);
     }
 
-    private List<MemberActivity> createMemberActivityList(LocalDateTime startDate, LocalDateTime endDate, ClanJpa clanJpa) {
+    private List<MemberActivity> createMemberActivityList(LocalDate startDate, LocalDate endDate, ClanJpa clanJpa) {
         List<MemberActivity> memberActivity = new ArrayList<>();
         for (MemberJpa member : clanJpa.getMembers()) {
             // get all the member activity data for the player within the specified time period
@@ -150,7 +148,7 @@ public class DataRetrievalService {
             .map(PlayerSnapshotJpa::getPlayerJpa).distinct().toList();
     }
 
-    private List<PlayerActivityJpa> findPlayerActivityJpas(Long playerId, LocalDateTime startDate, LocalDateTime endDate) {
+    private List<PlayerActivityJpa> findPlayerActivityJpas(Long playerId, LocalDate startDate, LocalDate endDate) {
         Specification<PlayerActivityJpa> spec = playerActivitySpec(playerId, startDate, endDate);
         return playerActivityRepository.findBy(
             spec,
@@ -158,7 +156,7 @@ public class DataRetrievalService {
         );
     }
 
-    private static Specification<PlayerActivityJpa> playerActivitySpec(Long playerId, LocalDateTime startDate, LocalDateTime endDate) {
+    private static Specification<PlayerActivityJpa> playerActivitySpec(Long playerId, LocalDate startDate, LocalDate endDate) {
         return (root, query, builder) ->
             builder.and(
                 builder.equal(root.get("playerJpa").get("id"), playerId),

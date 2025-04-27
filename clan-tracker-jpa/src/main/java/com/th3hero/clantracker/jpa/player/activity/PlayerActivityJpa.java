@@ -6,7 +6,9 @@ import lombok.*;
 import org.hibernate.Hibernate;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Objects;
 
 @Getter
@@ -34,6 +36,14 @@ public class PlayerActivityJpa implements Serializable {
 
     @NonNull
     @Column
+    private LocalDate effectiveDate;
+
+    @NonNull
+    @Column
+    private LocalTime effectiveTime;
+
+    @NonNull
+    @Column
     private LocalDateTime lastBattle;
 
     @NonNull
@@ -52,7 +62,17 @@ public class PlayerActivityJpa implements Serializable {
     @Column
     private Long totalClanWarBattles;
 
-    public static PlayerActivityJpa create(PlayerJpa playerJpa, LocalDateTime fetchedAt, LocalDateTime lastBattle, Long totalRandomBattles, Long totalSkirmishBattles, Long totalAdvancesBattles, Long totalClanWarBattles) {
+    public static PlayerActivityJpa create(
+        PlayerJpa playerJpa,
+        LocalDateTime fetchedAt,
+        LocalDateTime lastBattle,
+        Long totalRandomBattles,
+        Long totalSkirmishBattles,
+        Long totalAdvancesBattles,
+        Long totalClanWarBattles,
+        LocalDate effectiveDate,
+        LocalTime effectiveTime
+    ) {
         return PlayerActivityJpa.builder()
             .playerJpa(playerJpa)
             .fetchedAt(fetchedAt)
@@ -61,6 +81,8 @@ public class PlayerActivityJpa implements Serializable {
             .totalSkirmishBattles(totalSkirmishBattles)
             .totalAdvancesBattles(totalAdvancesBattles)
             .totalClanWarBattles(totalClanWarBattles)
+            .effectiveDate(effectiveDate)
+            .effectiveTime(effectiveTime)
             .build();
     }
 

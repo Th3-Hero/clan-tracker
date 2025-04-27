@@ -8,7 +8,9 @@ import lombok.*;
 import org.hibernate.Hibernate;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Objects;
 
 @Getter
@@ -36,6 +38,14 @@ public class PlayerSnapshotJpa implements Serializable {
 
     @NonNull
     @Column
+    private LocalDate effectiveDate;
+
+    @NonNull
+    @Column
+    private LocalTime effectiveTime;
+
+    @NonNull
+    @Column
     private String name;
 
     @ManyToOne
@@ -52,7 +62,16 @@ public class PlayerSnapshotJpa implements Serializable {
     @Column
     private LocalDateTime joinedAt;
 
-    public static PlayerSnapshotJpa create(PlayerJpa playerJpa, LocalDateTime fetchedAt, ClanJpa clanJpa, String name, Rank rank, LocalDateTime joinedClan) {
+    public static PlayerSnapshotJpa create(
+        PlayerJpa playerJpa,
+        LocalDateTime fetchedAt,
+        ClanJpa clanJpa,
+        String name,
+        Rank rank,
+        LocalDateTime joinedClan,
+        LocalDate effectiveDate,
+        LocalTime effectiveTime
+    ) {
         return PlayerSnapshotJpa.builder()
             .playerJpa(playerJpa)
             .fetchedAt(fetchedAt)
@@ -60,6 +79,8 @@ public class PlayerSnapshotJpa implements Serializable {
             .name(name)
             .rank(rank)
             .joinedAt(joinedClan)
+            .effectiveDate(effectiveDate)
+            .effectiveTime(effectiveTime)
             .build();
     }
 

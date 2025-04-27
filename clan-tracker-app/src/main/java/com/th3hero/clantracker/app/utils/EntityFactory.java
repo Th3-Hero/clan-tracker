@@ -11,7 +11,9 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.EnumUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.NONE)
@@ -20,7 +22,9 @@ public final class EntityFactory {
     public static PlayerActivityJpa createPlayerActivityJpa(
         MemberJpa member,
         Map<Long, EnrichedPlayer> enrichedPlayerMap,
-        LocalDateTime fetchDateTime
+        LocalDateTime fetchDateTime,
+        LocalDate effectiveDate,
+        LocalTime effectiveTime
     ) {
         EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(member.getPlayerJpa().getId());
         Long clanWarAbsoluteBattles = enrichedPlayer.statistics().get("globalmap_absolute").battles();
@@ -34,7 +38,9 @@ public final class EntityFactory {
             enrichedPlayer.statistics().get("random").battles(),
             enrichedPlayer.statistics().get("stronghold_skirmish").battles(),
             enrichedPlayer.statistics().get("stronghold_defense").battles(),
-            clanWarTotalBattles
+            clanWarTotalBattles,
+            effectiveDate,
+            effectiveTime
         );
     }
 
@@ -43,7 +49,9 @@ public final class EntityFactory {
         MemberJpa member,
         Map<Long, ClanInfo.EnrichedClan.BasicPlayer> basicPlayerMap,
         Map<Long, EnrichedPlayer> enrichedPlayerMap,
-        LocalDateTime fetchDateTime
+        LocalDateTime fetchDateTime,
+        LocalDate effectiveDate,
+        LocalTime effectiveTime
     ) {
         EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(member.getPlayerJpa().getId());
         ClanInfo.EnrichedClan.BasicPlayer basicPlayer = basicPlayerMap.get(enrichedPlayer.accountId());
@@ -53,7 +61,9 @@ public final class EntityFactory {
             clanJpa,
             enrichedPlayer.nickname(),
             EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role()),
-            DateUtils.fromTimestamp(basicPlayer.joinedAt())
+            DateUtils.fromTimestamp(basicPlayer.joinedAt()),
+            effectiveDate,
+            effectiveTime
         );
     }
 }

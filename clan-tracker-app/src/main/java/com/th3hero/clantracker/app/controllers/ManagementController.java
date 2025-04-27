@@ -43,13 +43,13 @@ public class ManagementController {
         clanTrackerService.removeClanFromTracking(clanTag);
     }
 
-    @PostMapping(value = "/import", consumes = "multipart/form-data")
-    @Operation(summary = "Import existing activity data csv file")
-    @ResponseStatus(HttpStatus.CREATED)
-    public void importExistingActivityData(
-        @NotNull(message = "Clan id must be provided.") Long clanId,
-        @NotNull(message = "CSV file for importing must be provided.") @RequestParam("file") MultipartFile file
-    ) {
-        clanTrackerService.importExistingClanActivity(file, clanId);
-    }
+//    @PostMapping(value = "/import", consumes = "multipart/form-data")
+//    @Operation(summary = "Import existing activity data csv file")
+//    @ResponseStatus(HttpStatus.CREATED)
+//    public void importExistingActivityData(
+//        @NotNull(message = "Clan id must be provided.") Long clanId,
+//        @NotNull(message = "CSV file for importing must be provided.") @RequestParam("file") MultipartFile file
+//    ) {
+//        clanTrackerService.importExistingClanActivity(file, clanId);
+//    }
 }
