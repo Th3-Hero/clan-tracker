@@ -50,7 +50,6 @@ public class ConfigService {
         var configJpa = ConfigJpa.builder()
             .memberActivityUpdateInterval(configUpload.memberActivityUpdateInterval())
             .defaultActivitySummaryDateRange(configUpload.defaultActivitySummaryDateRange())
-            .performanceThresholdBad(configUpload.performanceThresholdBad())
             .performanceThresholdPoor(configUpload.performanceThresholdPoor())
             .performanceThresholdGood(configUpload.performanceThresholdGood())
             .build();
@@ -68,9 +67,6 @@ public class ConfigService {
 
         if (configUpload.defaultActivitySummaryDateRange() != null) {
             configJpa.setDefaultActivitySummaryDateRange(configUpload.defaultActivitySummaryDateRange());
-        }
-        if (configUpload.performanceThresholdBad() != null) {
-            configJpa.setPerformanceThresholdBad(configUpload.performanceThresholdBad());
         }
         if (configUpload.performanceThresholdPoor() != null) {
             configJpa.setPerformanceThresholdPoor(configUpload.performanceThresholdPoor());

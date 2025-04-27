@@ -46,7 +46,6 @@ public class DataRetrievalService {
         final var configJpa = configService.getConfigJpa();
         return new Config(
             configJpa.getDefaultActivitySummaryDateRange(),
-            configJpa.getPerformanceThresholdBad(),
             configJpa.getPerformanceThresholdPoor(),
             configJpa.getPerformanceThresholdGood()
         );

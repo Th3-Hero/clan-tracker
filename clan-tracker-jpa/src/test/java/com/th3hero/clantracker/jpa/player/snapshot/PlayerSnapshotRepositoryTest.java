@@ -14,7 +14,9 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -154,6 +156,8 @@ class PlayerSnapshotRepositoryTest {
             .clanJpa(clanJpa)
             .rank(Rank.JUNIOR_OFFICER)
             .joinedAt(LocalDateTime.now().minusMonths(seed))
+            .effectiveDate(LocalDate.now().minusDays(seed))
+            .effectiveTime(LocalTime.now().minusMinutes(seed))
             .build();
     }
 }

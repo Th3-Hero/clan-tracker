@@ -29,10 +29,6 @@ public class ConfigJpa implements Serializable {
 
     @NonNull
     @Column
-    private Integer performanceThresholdBad;
-
-    @NonNull
-    @Column
     private Integer performanceThresholdPoor;
 
     @NonNull

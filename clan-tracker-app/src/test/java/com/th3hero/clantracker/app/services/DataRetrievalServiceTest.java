@@ -21,7 +21,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -51,8 +53,8 @@ class DataRetrievalServiceTest {
     @Test
     void getClanActivityData() {
         final var config = TestEntities.configJpa();
-        final var startDate = LocalDateTime.now();
-        final var endDate = LocalDateTime.now().plusWeeks(1);
+        final var startDate = LocalDate.now();
+        final var endDate = LocalDate.now().plusWeeks(1);
         final var clan = TestEntities.clanJpa(1);
         final var memberOne = TestEntities.memberJpa(1, clan);
         final var memberTwo = TestEntities.memberJpa(2, clan);
@@ -100,8 +102,8 @@ class DataRetrievalServiceTest {
     void getClanActivityData_missingClan() {
         Long clanId = 1234L;
         final var config = TestEntities.configJpa();
-        final var startDate = LocalDateTime.now();
-        final var endDate = LocalDateTime.now().plusDays(1);
+        final var startDate = LocalDate.now();
+        final var endDate = LocalDate.now().plusDays(1);
 
         when(configService.getConfigJpa())
             .thenReturn(config);
@@ -160,8 +162,8 @@ class DataRetrievalServiceTest {
         Long clanId = 1234L;
         final var config = TestEntities.configJpa();
         final var clan = TestEntities.clanJpa(1);
-        final var startDate = LocalDateTime.now();
-        final var endDate = LocalDateTime.now().minusDays(1);
+        final var startDate = LocalDate.now();
+        final var endDate = LocalDate.now().minusDays(1);
 
         when(configService.getConfigJpa()).
             thenReturn(config);
@@ -175,8 +177,8 @@ class DataRetrievalServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void getPlayerActivity_validId() {
-        var startDate = LocalDateTime.now();
-        var endDate = LocalDateTime.now().plusMonths(1);
+        var startDate = LocalDate.now();
+        var endDate = LocalDate.now().plusMonths(1);
         var player = TestEntities.playerJpa(1);
         var playerActivityList = createPlayerActivityList(TestEntities.memberJpa(1, TestEntities.clanJpa(1)));
 
@@ -198,8 +200,8 @@ class DataRetrievalServiceTest {
     @Test
     void getPlayerActivity_validName() {
         var idOrName = "bob123";
-        var startDate = LocalDateTime.now();
-        var endDate = LocalDateTime.now().plusMonths(1);
+        var startDate = LocalDate.now();
+        var endDate = LocalDate.now().plusMonths(1);
         var player = TestEntities.playerJpa(1);
         var playerActivityList = createPlayerActivityList(TestEntities.memberJpa(1, TestEntities.clanJpa(1)));
         var playerSnapshotList = createPlayerSnapshotList(player);
@@ -221,8 +223,8 @@ class DataRetrievalServiceTest {
     @Test
     void getPlayerActivity_startDateAfterEndDate() {
         var idOrName = "test";
-        var startDate = LocalDateTime.now();
-        var endDate = LocalDateTime.now().minusDays(1);
+        var startDate = LocalDate.now();
+        var endDate = LocalDate.now().minusDays(1);
 
         assertThatExceptionOfType(IllegalArgumentException.class)
             .isThrownBy(() -> dataRetrievalService.getPlayerActivity(idOrName, startDate, endDate));
@@ -231,8 +233,8 @@ class DataRetrievalServiceTest {
     @Test
     void getPlayerActivity_noPlayerWithNameFound() {
         var idOrName = "unknownPlayer";
-        var startDate = LocalDateTime.now();
-        var endDate = LocalDateTime.now().plusMonths(1);
+        var startDate = LocalDate.now();
+        var endDate = LocalDate.now().plusMonths(1);
 
         when(playerSnapshotRepository.findByNameContaining(idOrName))
             .thenReturn(List.of());
@@ -245,8 +247,8 @@ class DataRetrievalServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void getPlayerActivity_multipleMatchingPlayersFound() {
-        var startDate = LocalDateTime.now();
-        var endDate = LocalDateTime.now().plusMonths(1);
+        var startDate = LocalDate.now();
+        var endDate = LocalDate.now().plusMonths(1);
         var playerNameSearch = "Test";
         var playerOne = TestEntities.playerJpa(1);
         var playerTwo = TestEntities.playerJpa(2);
@@ -275,8 +277,8 @@ class DataRetrievalServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void getPlayerActivity_noActivityWithinPeriod() {
-        var startDate = LocalDateTime.now();
-        var endDate = LocalDateTime.now().plusMonths(1);
+        var startDate = LocalDate.now();
+        var endDate = LocalDate.now().plusMonths(1);
         var player = TestEntities.playerJpa(1);
         var playerId = player.getId().toString();
 
@@ -300,7 +302,9 @@ class DataRetrievalServiceTest {
                 1L + member.getPlayerJpa().getId(),
                 1L + member.getPlayerJpa().getId(),
                 1L + member.getPlayerJpa().getId(),
-                1L + member.getPlayerJpa().getId()
+                1L + member.getPlayerJpa().getId(),
+                LocalDate.now(),
+                LocalTime.now()
             )
         );
         activityJpas.add(
@@ -311,7 +315,9 @@ class DataRetrievalServiceTest {
                 5L + member.getPlayerJpa().getId(),
                 10L + member.getPlayerJpa().getId(),
                 15L + member.getPlayerJpa().getId(),
-                20L + member.getPlayerJpa().getId()
+                20L + member.getPlayerJpa().getId(),
+                LocalDate.now().minusDays(4),
+                LocalTime.now()
             )
         );
         activityJpas.add(
@@ -322,7 +328,9 @@ class DataRetrievalServiceTest {
                 10L + member.getPlayerJpa().getId(),
                 20L + member.getPlayerJpa().getId(),
                 30L + member.getPlayerJpa().getId(),
-                40L + member.getPlayerJpa().getId()
+                40L + member.getPlayerJpa().getId(),
+                LocalDate.now(),
+                LocalTime.now()
             )
         );
         return activityJpas;
@@ -337,7 +345,9 @@ class DataRetrievalServiceTest {
                 TestEntities.clanJpa(1),
                 "Bob",
                 Rank.COMBAT_OFFICER,
-                LocalDateTime.now().minusMonths(2)
+                LocalDateTime.now().minusMonths(2),
+                LocalDate.now().minusMonths(1),
+                LocalTime.now()
             )
         );
         playerSnapshotJpas.add(
@@ -347,7 +357,9 @@ class DataRetrievalServiceTest {
                 TestEntities.clanJpa(1),
                 "Bob1345",
                 Rank.PERSONNEL_OFFICER,
-                LocalDateTime.now().minusMonths(2)
+                LocalDateTime.now().minusMonths(2),
+                LocalDate.now(),
+                LocalTime.now()
             )
         );
         playerSnapshotJpas.add(
@@ -357,7 +369,9 @@ class DataRetrievalServiceTest {
                 TestEntities.clanJpa(1),
                 "Bob123",
                 Rank.PRIVATE,
-                LocalDateTime.now().minusMonths(2)
+                LocalDateTime.now().minusMonths(2),
+                LocalDate.now(),
+                LocalTime.now()
             )
         );
         return playerSnapshotJpas;

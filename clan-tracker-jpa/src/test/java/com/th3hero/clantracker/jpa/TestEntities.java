@@ -12,7 +12,6 @@ public class TestEntities {
         return ConfigJpa.builder()
             .id(1L)
             .memberActivityUpdateInterval(12)
-            .performanceThresholdBad(7)
             .performanceThresholdPoor(7)
             .performanceThresholdGood(12)
             .defaultActivitySummaryDateRange(28)

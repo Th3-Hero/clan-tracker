@@ -94,7 +94,7 @@ class ConfigServiceTest {
     @Test
     void updateConfig() {
         final var configJpa = TestEntities.configJpa();
-        final var configUpload = new ConfigUpload(100, 100, 100, 100, 100);
+        final var configUpload = new ConfigUpload(100, 100, 100, 100);
 
         when(configRepository.findAll())
             .thenReturn(List.of(configJpa));
@@ -106,7 +106,6 @@ class ConfigServiceTest {
         verify(configRepository, times(2)).save(argThat(config ->
             config.getMemberActivityUpdateInterval() == 100 &&
             config.getDefaultActivitySummaryDateRange() == 100 &&
-            config.getPerformanceThresholdBad() == 100 &&
             config.getPerformanceThresholdPoor() == 100 &&
             config.getPerformanceThresholdGood() == 100
         ));
@@ -115,7 +114,7 @@ class ConfigServiceTest {
     @Test
     void updateConfig_updateMemberActivityUpdateInterval() {
         final var configJpa = TestEntities.configJpa();
-        final var configUpload = new ConfigUpload(100, null, null, null, null);
+        final var configUpload = new ConfigUpload(100, null, null, null);
 
         when(configRepository.findAll())
             .thenReturn(List.of(configJpa));
@@ -132,7 +131,7 @@ class ConfigServiceTest {
     @Test
     void updateConfig_updateDefaultActivitySummary() {
         final var configJpa = TestEntities.configJpa();
-        final var configUpload = new ConfigUpload(null, null, null, null, 100);
+        final var configUpload = new ConfigUpload( null, null, null, 100);
 
         when(configRepository.findAll())
             .thenReturn(List.of(configJpa));
@@ -147,26 +146,9 @@ class ConfigServiceTest {
     }
 
     @Test
-    void updateConfig_updatePerformanceThresholdBad() {
-        final var configJpa = TestEntities.configJpa();
-        final var configUpload = new ConfigUpload(null, 100, null, null, null);
-
-        when(configRepository.findAll())
-            .thenReturn(List.of(configJpa));
-        when(configRepository.save(any()))
-            .thenReturn(configJpa);
-
-        configService.updateConfig(configUpload);
-
-        verify(configRepository).save(argThat(config ->
-            config.getPerformanceThresholdBad() == 100
-        ));
-    }
-
-    @Test
     void updateConfig_updatePerformanceThresholdPoor() {
         final var configJpa = TestEntities.configJpa();
-        final var configUpload = new ConfigUpload(null, null, 100, null, null);
+        final var configUpload = new ConfigUpload(null, 100, null, null);
 
         when(configRepository.findAll())
             .thenReturn(List.of(configJpa));
@@ -183,7 +165,7 @@ class ConfigServiceTest {
     @Test
     void updateConfig_updatePerformanceThresholdGood() {
         final var configJpa = TestEntities.configJpa();
-        final var configUpload = new ConfigUpload(null, null, null, 100, null);
+        final var configUpload = new ConfigUpload(null, null, 100, null);
 
         when(configRepository.findAll())
             .thenReturn(List.of(configJpa));

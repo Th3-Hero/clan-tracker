@@ -51,6 +51,7 @@ public class ApiService {
                 .onStatus(
                     HttpStatusCode::isError,
                     (clientRequest, clientResponse) -> {
+                        // TODO: Fix this as it logs the full URL with the API key. This is a security risk.
                         log.warn("Retrying request due to error status code. URI: {} Status: {}", uri, clientResponse.getStatusCode());
                         throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
                     })
@@ -61,6 +62,7 @@ public class ApiService {
                 throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
             }
             if (!"ok".equals(responseBody.status())) {
+                // TODO: Fix this as it logs the full URL with the API key. This is a security risk.
                 log.warn("Retrying request due to error. URI: {} Error: {}", uri, responseBody.error());
                 throw new InvalidWargamingResponseException("Invalid response from Wargaming API: %s".formatted(responseBody.error()));
             }
