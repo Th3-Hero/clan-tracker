@@ -6,6 +6,7 @@ import com.th3hero.clantracker.app.wargaming.ClanInfo.EnrichedClan;
 import com.th3hero.clantracker.app.wargaming.ClanSearch.BasicClan;
 import com.th3hero.clantracker.app.wargaming.MemberInfo.EnrichedPlayer;
 import com.th3hero.clantracker.app.wargaming.PlayerInfo.Player;
+import com.th3hero.clantracker.app.wargaming.request.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,19 +41,21 @@ public class ApiService {
      * @param <T> The type of the response
      * @return The response from the Wargaming API
      */
-    private <T extends WargamingResponse> T callApi(String requestString, Class<T> responseType) {
+    private <T extends WargamingResponse> T callApi(String requestString, RequestBody body, Class<T> responseType) {
         return retryTemplate.execute(context -> {
             String apiBaseUrl = "https://api.worldoftanks.com";
             String uri = apiBaseUrl + "/wot" + requestString;
-            final var response = restClient.get()
+            final var response = restClient.post()
                 .uri(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .body(body)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .retrieve()
                 .onStatus(
                     HttpStatusCode::isError,
                     (clientRequest, clientResponse) -> {
-                        // TODO: Fix this as it logs the full URL with the API key. This is a security risk.
                         log.warn("Retrying request due to error status code. URI: {} Status: {}", uri, clientResponse.getStatusCode());
+                        log.info("Request body: {}", body.getDebugInfo());
                         throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
                     })
                 .toEntity(responseType);
@@ -62,8 +65,8 @@ public class ApiService {
                 throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
             }
             if (!"ok".equals(responseBody.status())) {
-                // TODO: Fix this as it logs the full URL with the API key. This is a security risk.
                 log.warn("Retrying request due to error. URI: {} Error: {}", uri, responseBody.error());
+                log.info("Request body: {}", body.getDebugInfo());
                 throw new InvalidWargamingResponseException("Invalid response from Wargaming API: %s".formatted(responseBody.error()));
             }
             return responseBody;
@@ -78,13 +81,15 @@ public class ApiService {
      * @throws InvalidWargamingResponseException If the response from the Wargaming API is invalid.
      */
     public Optional<BasicClan> clanSearch(String clanTag) {
-        String requestString = "/clans/list/?application_id=%s&search=%s&fields=%s".formatted(
-            apiToken,
-            clanTag,
-            clanSearchFields()
-        );
+        String requestString = "/clans/list/";
 
-        final var response = callApi(requestString, ClanSearch.class);
+        ClanSearchRequest request = ClanSearchRequest.builder()
+            .token(apiToken)
+            .fields(clanSearchFields())
+            .clanTag(clanTag)
+            .build();
+
+        final var response = callApi(requestString, request, ClanSearch.class);
         return response.data().stream()
             .filter(clan -> clan.tag().equals(clanTag))
             .findFirst();
@@ -97,12 +102,15 @@ public class ApiService {
      * @return An {@link Optional} containing the clan if it was found, or an empty {@link Optional} if it was not found.
      */
     public Optional<EnrichedClan> clanDetails(Long clanId) {
-        String requestString = "/clans/info/?application_id=%s&clan_id=%s&fields=%s".formatted(
-            apiToken,
-            clanId,
-            clanDetailsFields()
-        );
-        final var response = callApi(requestString, ClanInfo.class);
+        String requestString = "/clans/info/";
+
+        ClanDetailsRequest request = ClanDetailsRequest.builder()
+            .token(apiToken)
+            .clanId(clanId.toString())
+            .fields(clanDetailsFields())
+            .build();
+
+        final var response = callApi(requestString, request, ClanInfo.class);
         return response.data().values().stream()
             .filter(clan -> clan.clanId().equals(clanId))
             .findFirst();
@@ -118,13 +126,16 @@ public class ApiService {
         List<EnrichedPlayer> allPlayers = new ArrayList<>();
         for (int i = 0; i < memberIds.size(); i += MAX_BATCH_SIZE) {
             List<Long> batch = memberIds.subList(i, Math.min(i + MAX_BATCH_SIZE, memberIds.size()));
-            String requestString = "/account/info/?application_id=%s&account_id=%s&extra=%s&fields=%s".formatted(
-                apiToken,
-                buildIdString(batch),
-                memberDetailsExtra(),
-                memberDetailsFields()
-            );
-            final var response = callApi(requestString, MemberInfo.class);
+            String requestString = "/account/info/";
+
+            MemberDetailsRequest request = MemberDetailsRequest.builder()
+                .token(apiToken)
+                .memberIds(buildIdString(batch))
+                .fields(memberDetailsFields())
+                .extra(memberDetailsExtra())
+                .build();
+
+            final var response = callApi(requestString, request, MemberInfo.class);
             allPlayers.addAll(response.data().values().stream().toList());
         }
         return allPlayers;
@@ -134,11 +145,15 @@ public class ApiService {
         Map<Long, Player> allPlayers = new HashMap<>();
         for (int i = 0; i < playerIds.size(); i += MAX_BATCH_SIZE) {
             List<Long> batch = playerIds.subList(i, Math.min(i + MAX_BATCH_SIZE, playerIds.size()));
-            String requestString = "/account/info/?application_id=%s&account_id=%s&fields=account_id,nickname".formatted(
-                apiToken,
-                buildIdString(batch)
-            );
-            final var response = callApi(requestString, PlayerInfo.class);
+            String requestString = "/account/info/";
+
+            PlayerInfoRequest request = PlayerInfoRequest.builder()
+                .token(apiToken)
+                .playerIds(buildIdString(batch))
+                .fields("account_id,nickname")
+                .build();
+
+            final var response = callApi(requestString, request, PlayerInfo.class);
             allPlayers.putAll(response.data().values().stream().collect(Collectors.toMap(Player::accountId, player -> player)));
         }
         return allPlayers;
