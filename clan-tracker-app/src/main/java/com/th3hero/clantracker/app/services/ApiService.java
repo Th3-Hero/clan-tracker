@@ -55,7 +55,7 @@ public class ApiService {
                     HttpStatusCode::isError,
                     (clientRequest, clientResponse) -> {
                         log.warn("Retrying request due to error status code. URI: {} Status: {}", uri, clientResponse.getStatusCode());
-                        log.info("Request body: {}", body.getDebugInfo());
+                        log.info("Request body: {}", body);
                         throw new InvalidWargamingResponseException(DEFAULT_ERROR_MESSAGE);
                     })
                 .toEntity(responseType);
@@ -66,7 +66,7 @@ public class ApiService {
             }
             if (!"ok".equals(responseBody.status())) {
                 log.warn("Retrying request due to error. URI: {} Error: {}", uri, responseBody.error());
-                log.info("Request body: {}", body.getDebugInfo());
+                log.info("Request body: {}", body);
                 throw new InvalidWargamingResponseException("Invalid response from Wargaming API: %s".formatted(responseBody.error()));
             }
             return responseBody;
