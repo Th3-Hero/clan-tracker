@@ -8,7 +8,6 @@ import org.hibernate.Hibernate;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Objects;
 
 @Getter
@@ -40,10 +39,6 @@ public class PlayerActivityJpa implements Serializable {
 
     @NonNull
     @Column
-    private LocalTime effectiveTime;
-
-    @NonNull
-    @Column
     private LocalDateTime lastBattle;
 
     @NonNull
@@ -70,8 +65,7 @@ public class PlayerActivityJpa implements Serializable {
         Long totalSkirmishBattles,
         Long totalAdvancesBattles,
         Long totalClanWarBattles,
-        LocalDate effectiveDate,
-        LocalTime effectiveTime
+        LocalDate effectiveDate
     ) {
         return PlayerActivityJpa.builder()
             .playerJpa(playerJpa)
@@ -82,7 +76,6 @@ public class PlayerActivityJpa implements Serializable {
             .totalAdvancesBattles(totalAdvancesBattles)
             .totalClanWarBattles(totalClanWarBattles)
             .effectiveDate(effectiveDate)
-            .effectiveTime(effectiveTime)
             .build();
     }
 

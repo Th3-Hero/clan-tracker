@@ -23,8 +23,7 @@ public final class EntityFactory {
         MemberJpa member,
         Map<Long, EnrichedPlayer> enrichedPlayerMap,
         LocalDateTime fetchDateTime,
-        LocalDate effectiveDate,
-        LocalTime effectiveTime
+        LocalDate effectiveDate
     ) {
         EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(member.getPlayerJpa().getId());
         Long clanWarAbsoluteBattles = enrichedPlayer.statistics().get("globalmap_absolute").battles();
@@ -39,8 +38,7 @@ public final class EntityFactory {
             enrichedPlayer.statistics().get("stronghold_skirmish").battles(),
             enrichedPlayer.statistics().get("stronghold_defense").battles(),
             clanWarTotalBattles,
-            effectiveDate,
-            effectiveTime
+            effectiveDate
         );
     }
 
@@ -50,8 +48,7 @@ public final class EntityFactory {
         Map<Long, ClanInfo.EnrichedClan.BasicPlayer> basicPlayerMap,
         Map<Long, EnrichedPlayer> enrichedPlayerMap,
         LocalDateTime fetchDateTime,
-        LocalDate effectiveDate,
-        LocalTime effectiveTime
+        LocalDate effectiveDate
     ) {
         EnrichedPlayer enrichedPlayer = enrichedPlayerMap.get(member.getPlayerJpa().getId());
         ClanInfo.EnrichedClan.BasicPlayer basicPlayer = basicPlayerMap.get(enrichedPlayer.accountId());
@@ -62,8 +59,7 @@ public final class EntityFactory {
             enrichedPlayer.nickname(),
             EnumUtils.getEnumIgnoreCase(Rank.class, basicPlayer.role()),
             DateUtils.fromTimestamp(basicPlayer.joinedAt()),
-            effectiveDate,
-            effectiveTime
+            effectiveDate
         );
     }
 }

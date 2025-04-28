@@ -115,11 +115,11 @@ public class ClanTrackerService {
         memberJpas = memberRepository.saveAll(memberJpas);
 
         // Create and save all the player activity of the members
-        List<PlayerActivityJpa> playerActivityJpas = createPlayerActivityJpas(effectiveDate, effectiveTime, memberJpas, enrichedPlayerMap);
+        List<PlayerActivityJpa> playerActivityJpas = createPlayerActivityJpas(effectiveDate, memberJpas, enrichedPlayerMap);
         playerActivityRepository.saveAll(playerActivityJpas);
 
         // Create and save all the player snapshots of the members
-        List<PlayerSnapshotJpa> playerSnapshotJpas = createPlayerSnapshotJpas(effectiveDate, effectiveTime, clan, memberJpas, basicPlayerMap, enrichedPlayerMap);
+        List<PlayerSnapshotJpa> playerSnapshotJpas = createPlayerSnapshotJpas(effectiveDate, clan, memberJpas, basicPlayerMap, enrichedPlayerMap);
         playerSnapshotRepository.saveAll(playerSnapshotJpas);
 
         clan.getMembers().addAll(memberJpas);
@@ -174,17 +174,17 @@ public class ClanTrackerService {
             .toList();
     }
 
-    private static List<PlayerActivityJpa> createPlayerActivityJpas(LocalDate effectiveDate, LocalTime effectiveTime, List<MemberJpa> members, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
+    private static List<PlayerActivityJpa> createPlayerActivityJpas(LocalDate effectiveDate, List<MemberJpa> members, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
         final LocalDateTime fetchDateTime = LocalDateTime.now();
         return members.stream()
-            .map(member -> EntityFactory.createPlayerActivityJpa(member, enrichedPlayerMap, fetchDateTime, effectiveDate, effectiveTime))
+            .map(member -> EntityFactory.createPlayerActivityJpa(member, enrichedPlayerMap, fetchDateTime, effectiveDate))
             .toList();
     }
 
-    private static List<PlayerSnapshotJpa> createPlayerSnapshotJpas(LocalDate effectiveDate, LocalTime effectiveTime, ClanJpa clanJpa, List<MemberJpa> members, Map<Long, BasicPlayer> basicPlayerMap, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
+    private static List<PlayerSnapshotJpa> createPlayerSnapshotJpas(LocalDate effectiveDate, ClanJpa clanJpa, List<MemberJpa> members, Map<Long, BasicPlayer> basicPlayerMap, Map<Long, EnrichedPlayer> enrichedPlayerMap) {
         final LocalDateTime fetchDateTime = LocalDateTime.now();
         return members.stream()
-            .map(member -> EntityFactory.createPlayerSnapshotJpa(clanJpa, member, basicPlayerMap, enrichedPlayerMap, fetchDateTime, effectiveDate, effectiveTime))
+            .map(member -> EntityFactory.createPlayerSnapshotJpa(clanJpa, member, basicPlayerMap, enrichedPlayerMap, fetchDateTime, effectiveDate))
             .toList();
     }
 

@@ -10,7 +10,6 @@ import org.hibernate.Hibernate;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Objects;
 
 @Getter
@@ -42,10 +41,6 @@ public class PlayerSnapshotJpa implements Serializable {
 
     @NonNull
     @Column
-    private LocalTime effectiveTime;
-
-    @NonNull
-    @Column
     private String name;
 
     @ManyToOne
@@ -69,8 +64,7 @@ public class PlayerSnapshotJpa implements Serializable {
         String name,
         Rank rank,
         LocalDateTime joinedClan,
-        LocalDate effectiveDate,
-        LocalTime effectiveTime
+        LocalDate effectiveDate
     ) {
         return PlayerSnapshotJpa.builder()
             .playerJpa(playerJpa)
@@ -80,7 +74,6 @@ public class PlayerSnapshotJpa implements Serializable {
             .rank(rank)
             .joinedAt(joinedClan)
             .effectiveDate(effectiveDate)
-            .effectiveTime(effectiveTime)
             .build();
     }
 
