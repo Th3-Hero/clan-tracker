@@ -12,7 +12,7 @@
 
 	<groupId>com.th3hero</groupId>
 	<artifactId>clan-tracker</artifactId>
-	<version>2.0.0</version>
+	<version>2.0.1</version>
 	<name>clan-tracker</name>
 	<description>WOT clan tracker tool</description>
 	<packaging>pom</packaging>

@@ -159,7 +159,7 @@ public class DataRetrievalService {
         return (root, query, builder) ->
             builder.and(
                 builder.equal(root.get("playerJpa").get("id"), playerId),
-                builder.between(root.get("fetchedAt"), startDate, endDate)
+                builder.between(root.get("effectiveDate"), startDate, endDate)
             );
     }
 
