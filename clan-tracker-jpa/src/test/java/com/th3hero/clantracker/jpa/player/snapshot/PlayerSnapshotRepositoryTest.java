@@ -157,7 +157,6 @@ class PlayerSnapshotRepositoryTest {
             .rank(Rank.JUNIOR_OFFICER)
             .joinedAt(LocalDateTime.now().minusMonths(seed))
             .effectiveDate(LocalDate.now().minusDays(seed))
-            .effectiveTime(LocalTime.now().minusMinutes(seed))
             .build();
     }
 }

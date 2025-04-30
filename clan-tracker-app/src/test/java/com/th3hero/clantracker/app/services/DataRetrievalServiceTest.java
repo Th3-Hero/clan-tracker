@@ -23,7 +23,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -303,8 +302,7 @@ class DataRetrievalServiceTest {
                 1L + member.getPlayerJpa().getId(),
                 1L + member.getPlayerJpa().getId(),
                 1L + member.getPlayerJpa().getId(),
-                LocalDate.now(),
-                LocalTime.now()
+                LocalDate.now()
             )
         );
         activityJpas.add(
@@ -316,8 +314,7 @@ class DataRetrievalServiceTest {
                 10L + member.getPlayerJpa().getId(),
                 15L + member.getPlayerJpa().getId(),
                 20L + member.getPlayerJpa().getId(),
-                LocalDate.now().minusDays(4),
-                LocalTime.now()
+                LocalDate.now().minusDays(4)
             )
         );
         activityJpas.add(
@@ -329,8 +326,7 @@ class DataRetrievalServiceTest {
                 20L + member.getPlayerJpa().getId(),
                 30L + member.getPlayerJpa().getId(),
                 40L + member.getPlayerJpa().getId(),
-                LocalDate.now(),
-                LocalTime.now()
+                LocalDate.now()
             )
         );
         return activityJpas;
@@ -346,8 +342,7 @@ class DataRetrievalServiceTest {
                 "Bob",
                 Rank.COMBAT_OFFICER,
                 LocalDateTime.now().minusMonths(2),
-                LocalDate.now().minusMonths(1),
-                LocalTime.now()
+                LocalDate.now().minusMonths(1)
             )
         );
         playerSnapshotJpas.add(
@@ -358,8 +353,7 @@ class DataRetrievalServiceTest {
                 "Bob1345",
                 Rank.PERSONNEL_OFFICER,
                 LocalDateTime.now().minusMonths(2),
-                LocalDate.now(),
-                LocalTime.now()
+                LocalDate.now()
             )
         );
         playerSnapshotJpas.add(
@@ -370,8 +364,7 @@ class DataRetrievalServiceTest {
                 "Bob123",
                 Rank.PRIVATE,
                 LocalDateTime.now().minusMonths(2),
-                LocalDate.now(),
-                LocalTime.now()
+                LocalDate.now()
             )
         );
         return playerSnapshotJpas;
