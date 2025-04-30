@@ -9,7 +9,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -24,11 +23,8 @@ public class MemberActivityFetchJob implements Job {
         Long clanId = executionContext.getTrigger().getJobDataMap().getLong(CLAN_ID);
         LocalDate effectiveDate = executionContext.getScheduledFireTime().toInstant()
             .atZone(DateUtils.ZONE_ID)
-            .toLocalDate()
-            .minusDays(1);
-        LocalTime effectiveTime = executionContext.getScheduledFireTime().toInstant()
-            .atZone(DateUtils.ZONE_ID)
-            .toLocalTime();
-        clanTrackerService.fetchMemberDetails(clanId, effectiveDate, effectiveTime);
+            .minusHours(3L)
+            .toLocalDate();
+        clanTrackerService.fetchMemberDetails(clanId, effectiveDate);
     }
 }

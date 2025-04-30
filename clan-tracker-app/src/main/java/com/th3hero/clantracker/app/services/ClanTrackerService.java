@@ -78,7 +78,7 @@ public class ClanTrackerService {
     }
 
     public void fetchMemberDetails(Long clanId) {
-        fetchMemberDetails(clanId, LocalDate.now(), LocalTime.of(LocalTime.now().getHour(), 0));
+        fetchMemberDetails(clanId, LocalDate.now());
     }
 
     /**
@@ -86,7 +86,7 @@ public class ClanTrackerService {
      *
      * @param clanId the id of the clan to fetch members for.
      */
-    public void fetchMemberDetails(Long clanId, LocalDate effectiveDate, LocalTime effectiveTime) {
+    public void fetchMemberDetails(Long clanId, LocalDate effectiveDate) {
         // get clan info and basic member info
         EnrichedClan clanDetails = enrichedClanValidator(clanId, apiService.clanDetails(clanId));
         List<Long> memberIds = clanDetails.members().stream()
