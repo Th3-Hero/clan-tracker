@@ -1,0 +1,22 @@
+name: Validate branch
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  shared-workflows:
+    name: Shared Workflows
+    uses: Th3-Hero/github-workflows-and-actions/.github/workflows/maven-validate.yml@main
+    with:
+      java-version: '21'
+      private-maven-proxy-repository: ${{ vars.PRIVATE_MAVEN_PROXY_REPOSITORY }}
+      private-maven-user: ${{ vars.PRIVATE_MAVEN_USER }}
+      private-server-base: ${{ vars.PRIVATE_SERVER_BASE }}
+    secrets:
+      private-maven-token: ${{ secrets.PRIVATE_MAVEN_TOKEN }}
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
